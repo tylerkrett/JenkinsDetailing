@@ -1,0 +1,130 @@
+[
+  {
+    "slug": "detailing",
+    "title": "Detailing",
+    "promise": "A safe wash, a full decontamination and a proper finish, inside and out.",
+    "description": "Every job starts the same way: snow foam to lift the grit before anything touches the paint, a two-bucket wash with grit guards, tar and iron fallout removed, a clay bar for what is bonded on, and a touchless dry. Inside, the seats and carpets are brushed and hoovered, the fabric steamed, the leather cleaned and fed, and the dash dressed matte, never greasy.\n\nWe work at the unit in Tregaron or at your door. Clients come from across Wales and from as far as London and Manchester.",
+    "priceNote": "Priced by vehicle size and condition. Ask for a quote.",
+    "includes": [
+      "Snow foam pre-wash and two-bucket safe wash",
+      "Tar, iron fallout and bonded contamination removed",
+      "Door shuts cleaned by hand",
+      "Wheels, arches and calipers cleaned",
+      "Interior brushed, hoovered, steamed and dressed",
+      "Glass polished inside and out"
+    ],
+    "duration": "Half a day to a full day",
+    "mobile": true,
+    "image": "about/danny-foam.jpg",
+    "featured": true,
+    "sortOrder": 10
+  },
+  {
+    "slug": "paint-correction",
+    "title": "Paint correction",
+    "promise": "Swirls, scratches and holograms removed by machine, then the gloss brought back.",
+    "description": "Poor washing, brushes at the automatic car wash, winter road salt and years of sun all mark the clear coat. Under a hard light the paint shows fans of fine scratches; in daylight it just looks dull.\n\nAfter a full decontamination we measure the paint depth and write a defect report, then correct the paint in stages with a dual-action polisher: cutting compound to level the defects, a finer polish to refine, and a panel wipe to check the true finish. Stone chips are touched in with paint matched to the VIN. The work is finished with a ceramic coating so it stays that way.",
+    "priceNote": "Silver and Gold packages. Priced on inspection.",
+    "includes": [
+      "Full decontamination and safe wash",
+      "Paint depth analysis and defect report",
+      "Multi-stage machine polishing",
+      "Stone chip touch-up matched to the VIN",
+      "Panel cleanse and ceramic coating",
+      "Wheels off, coated and refitted",
+      "Glass polished and coated, trim protected"
+    ],
+    "duration": "One to three days",
+    "guarantee": "Coating durability depends on the product chosen; see the package.",
+    "featured": true,
+    "sortOrder": 20
+  },
+  {
+    "slug": "ceramic-protection",
+    "title": "Ceramic protection",
+    "promise": "A hard, hydrophobic layer over the paint that takes the abuse instead of the clear coat.",
+    "description": "A ceramic coating is a liquid glass layer bonded to the paint. Water beads and sheets off it, dirt has less to grip, UV and chemicals are held off the clear coat, and washing becomes a rinse and a wipe.\n\nWe are a CarPro approved detailing centre. The coating is applied panel by panel with an applicator block, levelled after it flashes, and cured indoors for at least twelve hours out of direct sun. Wheels, glass and trim get their own coatings.",
+    "priceNote": "Usually applied after paint correction. Priced on inspection.",
+    "includes": [
+      "CarPro ceramic coating applied panel by panel",
+      "Twelve hour indoor cure",
+      "Wheel and tyre coating",
+      "Glass coating",
+      "Trim protection",
+      "Aftercare guidance and a maintenance wash plan"
+    ],
+    "duration": "One day plus the cure",
+    "guarantee": "Two to three years with the maintenance plan",
+    "featured": true,
+    "sortOrder": 30
+  },
+  {
+    "slug": "undersealing",
+    "title": "Undersealing and rust protection",
+    "promise": "The chassis jet-washed, dried, treated and coated on our 4000 kg lift.",
+    "description": "Mid Wales roads, salt and rain get under a car long before they show on top. Undersealing protects the metal you never see.\n\nUnderside total surface protection: a deep clean jet wash and chemical degrease of the whole chassis on the lift, wire-brushing of pitted or lightly corroded metal, a full dry with compressed air and at least twelve hours to air, then an anti-corrosion coating left to cure for another twelve hours. Under trays, arch liners and the spare wheel can be removed for a deeper treatment.\n\nExposed protection covers only the areas seen at an MOT: cleaned, dried overnight and protected with a durable wax oil coating.\n\nBadly rusted areas can be treated first with Hydrate 80, a rust converter that stops the corrosion before the coating goes on. We use Lanoguard, Bilt Hamber and Dynax UB, and we keep them on the shelf.",
+    "fromPriceGBP": 150,
+    "priceNote": "Total surface protection £200 to £250 for small and medium cars, £250 to £350 for medium to large vehicles. Exposed protection £150 for small cars, £200 for medium to large. Hydrate 80 rust converter £40 per 500 ml. Annual maintenance wash and inspection £100.",
+    "includes": [
+      "Jet wash and chemical degrease of the whole chassis",
+      "Wire brushing of pitted and corroded metal",
+      "Compressed air dry and twelve hours to air",
+      "Anti-corrosion coating, twelve hour cure",
+      "Optional under tray, arch liner and spare wheel removal",
+      "Four year guarantee on the maintenance programme"
+    ],
+    "duration": "Two days including curing",
+    "guarantee": "Four years on the maintenance programme, with a twelve month inspection",
+    "image": "process/underside-foam.jpg",
+    "featured": true,
+    "sortOrder": 40
+  },
+  {
+    "slug": "sanitising",
+    "title": "Sanitising and decontamination",
+    "promise": "Air conditioning, cabins, rooms and offices fogged with pH neutral, VOC free products.",
+    "description": "Full decontamination to the standards set during COVID-19, using pH neutral products with no harsh chemicals, no VOCs and no carcinogens. PPE is worn on every job.\n\nWe treat vehicles, holiday lets, schools and offices, with discounts for multiple jobs.",
+    "fromPriceGBP": 40,
+    "priceNote": "Air conditioning sanitisation £50 per vehicle. Household fogging £40 per room. Office fogging £99 per office. All prices plus VAT.",
+    "includes": [
+      "Air conditioning sanitisation",
+      "Cabin fogging",
+      "Household and holiday let fogging",
+      "Office fogging"
+    ],
+    "duration": "Under an hour per vehicle",
+    "mobile": true,
+    "sortOrder": 50
+  },
+  {
+    "slug": "yacht-detailing",
+    "title": "Yacht and boat detailing",
+    "promise": "Gel coat polished back to colour and sealed with a marine ceramic coating.",
+    "description": "Faded, chalky gel coat is machine polished back to its colour, then protected with a marine ceramic coating so it does not fade again. The boat must be out of the water for full access, and we plan the work for an overcast day.",
+    "priceNote": "Priced on the size of the vessel. Call to discuss.",
+    "includes": [
+      "Gel coat machine polish",
+      "Marine ceramic coating",
+      "Stainless and glass cleaned and protected"
+    ],
+    "duration": "Depends on the vessel",
+    "mobile": true,
+    "sortOrder": 60
+  },
+  {
+    "slug": "caravan-cleaning",
+    "title": "Caravan and motorhome cleaning",
+    "promise": "Black streaks, algae and oxidised panels cleaned, polished and protected.",
+    "description": "Caravans and motorhomes sit outside all year. We wash them safely, remove black streaks and algae, polish oxidised panels back to a shine and protect them so the next season's wash is a rinse.",
+    "priceNote": "Priced on length and condition. Ask for a quote.",
+    "includes": [
+      "Safe wash and black streak removal",
+      "Algae and moss removal from seals and roof",
+      "Machine polish of oxidised panels",
+      "Protective sealant"
+    ],
+    "duration": "One day",
+    "mobile": true,
+    "sortOrder": 70
+  }
+]

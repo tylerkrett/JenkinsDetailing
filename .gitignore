@@ -1,0 +1,72 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# database
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
+db.sqlite
+
+# next.js
+/.next/
+/.next-dev/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+# do not commit any .env files to git, except for the .env.example file. https://create.t3.gg/en/usage/env-variables#using-environment-variables
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# idea files
+.idea
+# cloudflare / opennext
+/.open-next
+/.wrangler
+.dev.vars
+cloudflare-env.d.ts
+
+# generated photo derivatives (rebuilt by scripts/prepare-content.ts)
+/public/photos-derived
+/public/og
+/content/*.generated.json
+
+# offline shell and service worker (rebuilt by scripts/build-game.ts)
+/public/offline.html
+/public/sw.js
+
+# yarn (this project uses pnpm; a stray `yarn` run must never pollute the repo)
+.pnp.*
+.yarn/
+yarn.lock
+
+# originals kept out of the deploy; the web versions live in public/photos
+/originals
+
+# compressed models are built by scripts/prepare-models.ts from models-src/ (committed)
+/public/models

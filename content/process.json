@@ -1,0 +1,74 @@
+[
+  {
+    "slug": "arrive",
+    "act": 1,
+    "title": "Arrive",
+    "what": "The car comes in as it is: road film, brake dust, a winter of salt.",
+    "why": "We look at every car dirty first. The dirt tells us what the paint has been through.",
+    "text": "Nothing is washed until it has been looked at. Where the grime sits, how the water runs off, what the wheels look like up close: all of it decides what the car needs and what it does not.",
+    "service": "detailing",
+    "sortOrder": 10
+  },
+  {
+    "slug": "wash",
+    "act": 2,
+    "title": "Safe wash",
+    "what": "Snow foam, a two-bucket wash, tar and fallout removed, then a touchless dry.",
+    "why": "Foam lifts the grit off before anything touches the paint. Drag it across and you have made new scratches.",
+    "text": "Snow foam goes on bottom to top and sits until it has lifted the loose dirt, then it is rinsed off top to bottom. The contact wash uses two buckets with grit guards so the mitt never carries grit back to the panel. Tar, iron fallout and tree sap come off with dedicated removers, bonded contamination with a clay bar, and the car is dried with filtered air rather than a towel.",
+    "service": "detailing",
+    "image": "about/danny-foam.jpg",
+    "sortOrder": 20
+  },
+  {
+    "slug": "under",
+    "act": 3,
+    "title": "Wheels off, underneath",
+    "what": "The car goes up on the lift, the wheels come off, and the arches, calipers and chassis are cleaned and protected.",
+    "why": "You cannot clean or coat an arch properly with a wheel in the way, and the underside is where a car rusts first.",
+    "text": "On the 4000 kg lift the wheels come off and go on the bench. Arches and calipers are cleaned by hand. The chassis is jet washed and degreased, wire brushed where it needs it, dried with compressed air and left to air before any coating goes on. Then the underside is protected with Lanoguard or a wax oil coating and left to cure.",
+    "service": "undersealing",
+    "image": "process/underside-foam.jpg",
+    "sortOrder": 30
+  },
+  {
+    "slug": "inside",
+    "act": 4,
+    "title": "Inside",
+    "what": "Seats and carpets brushed and hoovered, fabric steamed, leather cleaned and fed, the dash dressed.",
+    "why": "Brushing lifts the grit out of the pile before the hoover, or it stays in there and wears the fabric.",
+    "text": "A stiff brush flicks the grit out of carpets and seats towards the crevice tool. Fabric is steamed, leather is cleaned with a soft brush and fed so it stays matte, vents and switches are brushed out, and the dash and door cards are dressed with a matte finish, never a greasy shine.",
+    "service": "detailing",
+    "sortOrder": 40
+  },
+  {
+    "slug": "correct",
+    "act": 5,
+    "title": "Paint correction",
+    "what": "Under an inspection light the swirls show. The polisher takes them out stage by stage.",
+    "why": "Swirls only show under a hard point light, which is why they hide in daylight and why we correct under one.",
+    "text": "A paint depth gauge tells us how much clear coat there is to work with. Then the dual-action polisher goes over the car in small sections, cross-hatched passes with half a pad of overlap, cutting first and refining after. A panel wipe removes the polishing oils so what we see is the true finish, not a filled one.",
+    "service": "paint-correction",
+    "sortOrder": 50
+  },
+  {
+    "slug": "protect",
+    "act": 6,
+    "title": "Ceramic protection",
+    "what": "The coating goes on panel by panel, flashes, is levelled, and cures for twelve hours.",
+    "why": "Ceramic is a sacrificial glass layer. It takes the abuse so the clear coat does not have to.",
+    "text": "The coating is applied in straight overlapping strokes, section by section. After a minute or two it flashes, an oil-slick rainbow that shows it has bonded, and it is levelled with two fresh towels before it sets. The car then cures indoors out of the sun. Water beads high and tight on it, and sheets straight off.",
+    "service": "ceramic-protection",
+    "sortOrder": 60
+  },
+  {
+    "slug": "reveal",
+    "act": 7,
+    "title": "The reveal",
+    "what": "Wheels back on, lights up, the car handed back better than it left the showroom.",
+    "why": "This is the standard. If it is not right under the lights, it is not finished.",
+    "text": "The car is checked under the lights panel by panel, the wheels are torqued back on, and it is handed back with the aftercare guide: how to wash it, what not to use, and when to come back for a maintenance wash.",
+    "service": "ceramic-protection",
+    "sortOrder": 70
+  }
+]

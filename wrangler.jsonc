@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jenkins-detailing",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Custom domains: Cloudflare creates the DNS records on deploy (the zone must be in this account).
+  "routes": [
+    { "pattern": "jenkinsdetailing.com", "custom_domain": true },
+    { "pattern": "www.jenkinsdetailing.com", "custom_domain": true }
+  ],
+  // Keep the workers.dev address alive so old links land, then the middleware sends them to the apex.
+  "workers_dev": true,
+  "keep_vars": true,
+  "observability": { "enabled": true },
+  "upload_source_maps": true
+}

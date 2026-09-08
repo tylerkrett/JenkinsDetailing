@@ -1,0 +1,20 @@
+{
+  // Wrangler config for the Jenkins Detailing CMS sign-in Worker (Sveltia CMS Authenticator).
+  // The code is NOT vendored: clone the upstream project into ./upstream first —
+  // see ./README.md. Deploy from the repository root with
+  //   pnpm exec wrangler deploy -c cms-auth/wrangler.jsonc
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "jenkins-detailing-cms-auth",
+  "main": "./upstream/src/index.js",
+  "compatibility_date": "2026-09-01",
+  "observability": { "enabled": true },
+  "vars": {
+    // Hostnames allowed to sign in through this Worker (comma-separated, `*` wildcard).
+    // Matched against the hostname the admin page is served from. A wildcard matches
+    // subdomains only, so list the bare domain too. Keep `localhost` only while you
+    // are testing the admin page against a local `next dev`.
+    "ALLOWED_DOMAINS": "jenkins-detailing.example,www.jenkins-detailing.example,localhost"
+  }
+  // Secrets (never put these here): GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET — set with
+  //   pnpm exec wrangler secret put GITHUB_CLIENT_ID -c cms-auth/wrangler.jsonc
+}

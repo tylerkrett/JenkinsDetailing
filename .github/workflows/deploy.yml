@@ -1,0 +1,54 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build and deploy to Cloudflare Workers
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      # Committed in .env.production as well; set here so it is unmistakable in the log.
+      NEXT_PUBLIC_SITE_URL: https://jenkinsdetailing.com
+      # The CMS config points at this repository.
+      CMS_REPO: ${{ github.repository }}
+      CMS_AUTH_URL: ${{ vars.CMS_AUTH_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.0.6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck and lint
+        run: |
+          pnpm content
+          pnpm exec tsc --noEmit
+          pnpm exec next lint
+
+      - name: Build (content pipeline + Next + OpenNext)
+        run: pnpm run build:cf
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

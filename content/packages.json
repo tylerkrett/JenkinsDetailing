@@ -1,0 +1,40 @@
+[
+  {
+    "slug": "silver",
+    "name": "Silver",
+    "service": "paint-correction",
+    "summary": "A single-stage correction that removes the swirls and light scratches most cars carry, finished with a ceramic coating.",
+    "priceNote": "Priced on inspection",
+    "stages": 1,
+    "steps": [
+      "Full decontamination and safe wash",
+      "Clay bar and touchless dry",
+      "Paint depth analysis and defect report",
+      "One-stage machine polish",
+      "Panel cleanse and ceramic coating, twelve hour cure",
+      "Wheels and tyres coated, trim protected",
+      "Glass polished and coated"
+    ],
+    "sortOrder": 10
+  },
+  {
+    "slug": "gold",
+    "name": "Gold",
+    "service": "paint-correction",
+    "summary": "A multi-stage correction for deeper scratches, holograms and heavy swirling, with stone chips touched in, finished with a ceramic coating.",
+    "priceNote": "Priced on inspection",
+    "stages": 3,
+    "steps": [
+      "Full decontamination and safe wash",
+      "Clay bar and touchless dry",
+      "Paint depth analysis and defect report",
+      "Multi-stage machine polish: cut, refine, finish",
+      "Stone chips touched in with paint matched to the VIN",
+      "Panel cleanse and ceramic coating, twelve hour cure",
+      "Wheels off, deep cleaned, coated and refitted",
+      "Arches and calipers cleaned and dressed by hand",
+      "Glass polished and coated, trim protected"
+    ],
+    "sortOrder": 20
+  }
+]

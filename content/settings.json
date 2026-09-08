@@ -1,0 +1,25 @@
+{
+  "name": "Jenkins Detailing",
+  "legalName": "Jenkins Detailing & Car Sales Ltd",
+  "companyNumber": "",
+  "registeredOffice": "",
+  "vatNumber": "",
+  "tagline": "One journey to making car dreams come true.",
+  "promise": "Bring it in dirty. Drive it home better than new.",
+  "addressLine": "Rose Garage, Dewi Road",
+  "town": "Tregaron",
+  "postcode": "SY25 6JN",
+  "phone": "07805 538 687",
+  "phoneDigits": "447805538687",
+  "email": "info@jenkinsdetailing.com",
+  "hoursText": "Monday to Friday, 9am to 5pm\nSaturday and Sunday, closed",
+  "hoursSpec": "Mo-Fr 09:00-17:00",
+  "directionsUrl": "https://www.google.com/maps/search/?api=1&query=Rose+Garage+Dewi+Road+Tregaron+SY25+6JN",
+  "established": 2013,
+  "carproApproved": true,
+  "portrait": "about/danny-foam.jpg",
+  "socials": {
+    "instagram": "https://www.instagram.com/jenkinsdetailing/",
+    "facebook": "https://www.facebook.com/jenkinsdetailing/"
+  }
+}

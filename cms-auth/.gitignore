@@ -1,0 +1,4 @@
+# Upstream clone of https://github.com/sveltia/sveltia-cms-auth (see README.md)
+upstream/
+# Local secrets for `wrangler dev`
+.dev.vars

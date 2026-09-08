@@ -1,0 +1,52 @@
+{
+  "home": {
+    "title": "Car detailing, paint correction and ceramic coating in Tregaron",
+    "description": "Jenkins Detailing, a CarPro approved detailing centre in Tregaron, Mid Wales. Paint correction, ceramic protection, undersealing and full detailing, at the unit or at your door.",
+    "intro": "",
+    "headline": "Bring it in dirty. Drive it home better than new.",
+    "subline": "Paint correction, ceramic protection and undersealing in Tregaron, and at your door across Wales."
+  },
+  "services": {
+    "title": "Services",
+    "description": "Detailing, paint correction, ceramic protection, undersealing, sanitising, yacht and caravan work by Jenkins Detailing in Tregaron.",
+    "intro": "Every service starts with a safe wash and a proper look at the car. Prices are given after we have seen it; the numbers below are the ones we can give up front."
+  },
+  "process": {
+    "title": "How we do it",
+    "description": "The Jenkins Detailing process, step by step: what is done to your car and why.",
+    "intro": "The same sequence on every car, in this order, with a reason for each step."
+  },
+  "work": {
+    "title": "Work",
+    "description": "Before and after: paint correction, ceramic coatings and undersealing by Jenkins Detailing.",
+    "intro": "Real cars, before and after."
+  },
+  "about": {
+    "title": "About",
+    "description": "Danny Jenkins and Jenkins Detailing: a CarPro approved detailing centre at Rose Garage, Tregaron, since 2013.",
+    "intro": "",
+    "story": "Danny started detailing at seventeen with his own first car. Three years in catering and hospitality followed, working as a second chef alongside Will Holland and Angela Gray, before the cars won. In 2013 he founded Jenkins Detailing.\n\nWhat started with basic washes has become a detailing centre that draws clients from across Wales and from London and Manchester. The unit at Rose Garage in Tregaron has a dedicated 4000 kg lift for undersealing and is a CarPro approved detailing centre. Danny and the team also work at the door.\n\nRose Garage itself has been in the family since 1915, the longest established garage in Ceredigion."
+  },
+  "contact": {
+    "title": "Get a quote",
+    "description": "Ask Jenkins Detailing for a quote. Tell us the car and what it needs; we reply with a price and a date.",
+    "intro": "Tell us the car and what it needs. We reply with a price and the earliest date. For the fastest answer, send photos on WhatsApp."
+  },
+  "privacy": {
+    "title": "Privacy",
+    "description": "How Jenkins Detailing handles the personal data you send through this site.",
+    "intro": "",
+    "body": "This site collects only what you send through the quote form or by email: your name, contact details, the vehicle and your message. We use it to reply to you and to carry out the work you ask for. We do not sell it or share it with anyone except the services that deliver our email.\n\nThe site sets no tracking cookies. Traffic is measured with Cloudflare Web Analytics, which does not use cookies or identify individuals.\n\nYou can ask what we hold about you, or ask us to delete it, by emailing us. We keep quote requests for twelve months unless you become a customer, in which case we keep the job record for our accounts."
+  },
+  "terms": {
+    "title": "Terms",
+    "description": "The terms on which Jenkins Detailing carries out work.",
+    "intro": "",
+    "body": "Quotes are given after we have seen the vehicle, in person or from photographs, and may change if its condition differs from what was described.\n\nPaint correction removes defects from the clear coat; it cannot remove damage that has gone through it. We measure paint depth before we start and will tell you where correction is not safe.\n\nCoatings and undersealing carry the guarantees stated on the service page, which depend on the maintenance programme being followed.\n\nVehicles are left with us at the owner's risk but are kept in a locked unit and insured while in our care. We ask for payment on collection."
+  },
+  "play": {
+    "title": "Bucket Run",
+    "description": "Run the forecourt, jump the cones, duck the shutter, collect the bottles. Jenkins Detailing's game, online or off.",
+    "intro": ""
+  }
+}

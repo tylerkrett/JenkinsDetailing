@@ -1,0 +1,4 @@
+# Copy to .dev.vars for `pnpm exec wrangler dev -c cms-auth/wrangler.jsonc`.
+# Use a SEPARATE GitHub OAuth app whose callback is http://localhost:8787/callback.
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=

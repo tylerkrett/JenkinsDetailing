@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo), var(--font-figtree), ui-sans-serif, sans-serif;
+
+  /* The whole site runs on five colours. Jenkins blue is the only accent. */
+  --color-ink: #06080f;
+  --color-ink-2: #0c111c;
+  --color-bone: #eef1f6;
+  --color-accent: #2247d6;
+  --color-accent-lit: #8fa6ff;
+
+  /* Fluid display scale */
+  --text-display-xl: clamp(2.75rem, 7vw, 6.5rem);
+  --text-display-xl--line-height: 0.95;
+  --text-display-lg: clamp(2.125rem, 4.4vw, 3.75rem);
+  --text-display-lg--line-height: 1.02;
+  --text-display-md: clamp(1.5rem, 2.4vw, 2.25rem);
+  --text-display-md--line-height: 1.1;
+  --text-body: 1.0625rem;
+  --text-body--line-height: 1.6;
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-cubic: cubic-bezier(0.32, 0, 0.67, 0);
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    background: var(--color-ink);
+    color: var(--color-bone);
+  }
+  body {
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    /* Archivo's width axis: headlines run wide. */
+    font-stretch: 112%;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  a, button, [role="button"], input, select, textarea {
+    touch-action: manipulation;
+  }
+  /* Among the acts the page is paged by swipe, not scrolled (scroll-driver). */
+  html[data-paged] #main {
+    touch-action: none;
+  }
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-bone);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent-lit);
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  padding: 0.5rem 0.875rem;
+  background: var(--color-accent);
+  color: var(--color-bone);
+  font-weight: 600;
+  transform: translateY(-200%);
+  transition: transform 150ms var(--ease-out-quint);
+  &:focus-visible {
+    transform: translateY(0);
+  }
+}
+
+/* Hairline used wherever real content needs separating. Never decorative. */
+@utility hairline {
+  border-color: color-mix(in oklab, var(--color-bone) 14%, transparent);
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@utility caption-in {
+  animation: caption-in 700ms var(--ease-out-quint) backwards;
+}
+
+/* Opacity only: a transform on the page wrapper would break position: fixed for
+   everything inside it (loading cover, captions, menus) while it runs. */
+@keyframes page-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@utility page-arrive {
+  animation: page-arrive 600ms var(--ease-out-quint) backwards;
+}
+
+/* No-JS safety: the server-rendered loading cover lifts by itself. */
+@keyframes load-cover-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+@utility load-cover {
+  animation: load-cover-out 600ms ease-out 5s forwards;
+}
+/* Once JavaScript has confirmed the scene will run, the cover waits for it however long it takes. */
+@utility load-cover-hold {
+  animation: none !important;
+}
