@@ -14,6 +14,8 @@ import {
 } from "three";
 
 import { BAY } from "~/lib/scene/bay-layout";
+
+import { Street } from "./street";
 import {
   makeCorrugatedTexture,
   makeRoundelTexture,
@@ -67,8 +69,8 @@ const rainFragment = /* glsl */ `
  * Beyond the shutter: Central Garage's forecourt on a wet Welsh evening. The white
  * gabled front with the JJ roundel and the lettering, the long stone side building
  * under a corrugated roof, the church tower behind, two trees, the green railings, a
- * totem sign, terraces of old stone and rendered houses down the road, sodium lamps,
- * an overcast sky and light rain. All drawn at runtime; nothing fetched.
+ * totem sign, the high street of shops beyond (street.tsx), an overcast sky and light
+ * rain. All drawn at runtime; nothing fetched.
  */
 export function Exterior({ mobile }: Props) {
   const tex = useMemo(() => {
@@ -79,15 +81,15 @@ export function Exterior({ mobile }: Props) {
     const corrugated = makeCorrugatedTexture();
     corrugated.repeat.set(10, 1);
     const tarmac = makeTarmacTexture();
-    tarmac.repeat.set(12, 12);
-    const render = makeStoneTexture(21);
-    render.repeat.set(3, 2);
+    tarmac.repeat.set(9, 3);
+    const house = makeStoneTexture(21);
+    house.repeat.set(2, 1.6);
     return {
       stone,
       stoneDark,
       corrugated,
       tarmac,
-      render,
+      house,
       roundel: makeRoundelTexture(),
       lettering: makeSignTexture("CENTRAL GARAGE", { width: 1024, height: 160, bg: "#f4f1ea", fg: "#1c1f2a" }),
       totem: makeSignTexture("JENKINS", { width: 256, height: 1024, bg: "#f6f5f0", fg: "#c8102e", font: "bold 44px Archivo, Arial, sans-serif" }),
@@ -142,22 +144,6 @@ export function Exterior({ mobile }: Props) {
     rain.m.uniforms.uDpr!.value = state.viewport.dpr;
   });
 
-  const terraces = useMemo(() => {
-    // Terraces flank the road on both sides, gable to the street: stone and render,
-    // pitched slate roofs, a few lit windows. `x` is the house's centre; `w` runs along z.
-    const out: { x: number; z: number; w: number; h: number; render: boolean; lit: number[]; side: 1 | -1 }[] = [];
-    for (const side of [-1, 1] as const) {
-      let z = Z + 6;
-      let k = side === -1 ? 0 : 3;
-      while (z < Z + 44) {
-        const w = 5 + ((k * 7) % 5);
-        out.push({ x: side * (22 + ((k * 3) % 3)), z: z + w / 2, w, h: 6 + ((k * 5) % 3), render: k % 3 === 1, lit: [k % 2, (k + 1) % 3], side });
-        z += w + 0.4;
-        k++;
-      }
-    }
-    return out;
-  }, [Z]);
 
   return (
     <group>
@@ -167,11 +153,13 @@ export function Exterior({ mobile }: Props) {
         <meshBasicMaterial map={tex.sky} side={BackSide} fog={false} />
       </mesh>
 
-      {/* Forecourt and the road, wet. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, Z + 22]}>
-        <planeGeometry args={[80, 60]} />
-        <meshStandardMaterial map={tex.tarmac} roughness={0.32} metalness={0.15} />
+      {/* The forecourt: black tarmac from the shutter out to the railings. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, Z + 5.75]} receiveShadow>
+        <planeGeometry args={[44, 12.5]} />
+        <meshStandardMaterial map={tex.tarmac} roughness={0.55} metalness={0.05} envMapIntensity={0.15} />
       </mesh>
+      {/* The street beyond it. */}
+      <Street mobile={mobile} />
 
       {/* The gable over the garage front: rendered white, front and back faces. */}
       <mesh position={[0, 0, Z + 0.16]}>
@@ -259,8 +247,8 @@ export function Exterior({ mobile }: Props) {
 
       {/* Two trees by the church: dark clusters, the way they read at dusk. */}
       {[
-        [-2, Z - 12],
-        [4.5, Z - 15],
+        [-3, Z - 19],
+        [5, Z - 22],
       ].map(([x, z], i) => (
         <group key={i} position={[x!, 0, z!]}>
           <mesh position={[0, 2.2, 0]}>
@@ -284,7 +272,7 @@ export function Exterior({ mobile }: Props) {
       {/* Green railings along the front of the forecourt, a gap for the entrance. */}
       {Array.from({ length: 26 }, (_, i) => {
         const x = -16 + i * 1.3;
-        if (Math.abs(x) < 4) return null;
+        if (Math.abs(x) < 4.7) return null;
         return (
           <mesh key={i} position={[x, 0.6, Z + 12]}>
             <boxGeometry args={[0.06, 1.2, 0.06]} />
@@ -294,12 +282,12 @@ export function Exterior({ mobile }: Props) {
       })}
       {[-1, 1].map((sx) => (
         <group key={sx}>
-          <mesh position={[sx * 10.2, 1.15, Z + 12]}>
-            <boxGeometry args={[12.4, 0.06, 0.06]} />
+          <mesh position={[sx * 10.6, 1.15, Z + 12]}>
+            <boxGeometry args={[12, 0.06, 0.06]} />
             <meshStandardMaterial color="#2f7a3a" roughness={0.6} metalness={0.3} />
           </mesh>
-          <mesh position={[sx * 10.2, 0.25, Z + 12]}>
-            <boxGeometry args={[12.4, 0.06, 0.06]} />
+          <mesh position={[sx * 10.6, 0.25, Z + 12]}>
+            <boxGeometry args={[12, 0.06, 0.06]} />
             <meshStandardMaterial color="#2f7a3a" roughness={0.6} metalness={0.3} />
           </mesh>
         </group>
@@ -317,44 +305,43 @@ export function Exterior({ mobile }: Props) {
         </mesh>
       </group>
 
-      {/* Street lamps: two sodium lamps over the road. */}
-      {[-15, 15].map((x) => (
-        <group key={x} position={[x, 0, Z + 15]}>
-          <mesh position={[0, 3, 0]}>
-            <cylinderGeometry args={[0.06, 0.09, 6, 8]} />
-            <meshStandardMaterial color="#3b3f46" roughness={0.6} metalness={0.6} />
+      {/* The stone house joined on to the left of the garage, its windows lit. */}
+      <group position={[-11.2, 0, Z - 1.2]}>
+        <mesh position={[0, 3.4, 0]}>
+          <boxGeometry args={[9, 6.8, 8.5]} />
+          <meshStandardMaterial map={tex.house} roughness={1} />
+        </mesh>
+        <mesh position={[0, 6.8 + 1.15, 0]} rotation={[0, 0, 0]}>
+          <boxGeometry args={[9.4, 0.14, 4.6]} />
+          <meshStandardMaterial color="#23272e" roughness={0.75} />
+        </mesh>
+        {[-1, 1].map((sx) => (
+          <mesh key={sx} position={[0, 6.8 + 1.15, sx * 2.6]} rotation={[sx * 0.62, 0, 0]}>
+            <boxGeometry args={[9.4, 0.14, 4.6]} />
+            <meshStandardMaterial color="#23272e" roughness={0.75} />
           </mesh>
-          <mesh position={[0, 6.1, 0.3]}>
-            <boxGeometry args={[0.5, 0.2, 0.8]} />
-            <meshBasicMaterial color={new Color(1.4, 1.05, 0.6)} toneMapped={false} />
+        ))}
+        <mesh position={[-3.2, 9.2, 0]}>
+          <boxGeometry args={[0.8, 1.6, 0.8]} />
+          <meshStandardMaterial map={tex.house} roughness={1} />
+        </mesh>
+        {[
+          [-2.6, 1.5, true],
+          [0.4, 1.5, false],
+          [-2.6, 4.4, true],
+          [0.4, 4.4, true],
+          [2.9, 4.4, false],
+        ].map(([x, y, lit], i) => (
+          <mesh key={i} position={[x as number, y as number, 4.27]}>
+            <planeGeometry args={[1.0, 1.4]} />
+            <meshBasicMaterial color={lit ? "#ffd9a0" : "#0a0c12"} />
           </mesh>
-          <pointLight color={SODIUM} intensity={26} distance={22} decay={2} position={[0, 5.9, 0.3]} />
-        </group>
-      ))}
-
-      {/* Old Tregaron across the road: terraces of stone and render, slate roofs, lit windows. */}
-      {terraces.map((t, i) => (
-        <group key={i} position={[t.x, 0, t.z]} rotation={[0, (t.side * Math.PI) / 2, 0]}>
-          <mesh position={[0, t.h / 2, 0]}>
-            <boxGeometry args={[t.w, t.h, 8]} />
-            <meshStandardMaterial map={t.render ? tex.render : tex.stone} color={t.render ? "#d9d2c4" : "#ffffff"} roughness={0.95} />
-          </mesh>
-          <mesh position={[0, t.h + 1.2, 0]} rotation={[0, 0, Math.PI / 4]}>
-            <boxGeometry args={[t.w * 0.72, t.w * 0.72, 8.2]} />
-            <meshStandardMaterial color="#20242c" roughness={0.9} />
-          </mesh>
-          <mesh position={[0, t.h + 1.4, 0]}>
-            <boxGeometry args={[0.5, 1.6, 0.5]} />
-            <meshStandardMaterial color="#5a5049" roughness={1} />
-          </mesh>
-          {t.lit.map((lit, j) => (
-            <mesh key={j} position={[(j - 0.5) * (t.w * 0.45), 1.6 + j * 2.4, -4.02]}>
-              <planeGeometry args={[0.9, 1.1]} />
-              <meshBasicMaterial color={lit ? "#ffd9a0" : "#0a0c12"} />
-            </mesh>
-          ))}
-        </group>
-      ))}
+        ))}
+        <mesh position={[2.9, 1.1, 4.27]}>
+          <planeGeometry args={[0.95, 2.1]} />
+          <meshStandardMaterial color="#1f3d2b" roughness={0.8} />
+        </mesh>
+      </group>
 
       {/* Rain over the forecourt. */}
       <points ref={points} geometry={rain.g} material={rain.m} frustumCulled={false} />

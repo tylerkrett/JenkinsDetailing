@@ -39,7 +39,7 @@ for (const file of [".env.production", ".env"]) {
   if (!existsSync(file)) continue;
   for (const line of readFileSync(file, "utf8").split("\n")) {
     const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/.exec(line);
-    if (m && m[1] && process.env[m[1]] === undefined)
+    if (m?.[1] && process.env[m[1]] === undefined)
       process.env[m[1]] = m[2]!.replace(/^["']|["']$/g, "");
   }
 }

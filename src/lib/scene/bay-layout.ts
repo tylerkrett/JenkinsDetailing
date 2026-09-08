@@ -53,6 +53,20 @@ export function carZ(u: number) {
   return lerp(PARK_Z, 0, smooth(d));
 }
 
+/** The car keeps to the left lane down the street and swings to the centre as it turns in. */
+export function carX(u: number) {
+  return -LANE_X * smooth(unlerp(PARK_Z + 1, PARK_Z + 12, carZ(u)));
+}
+
+/** The heading change through that swing: nose to the right, then straight again. */
+export function carYaw(u: number) {
+  const t = unlerp(PARK_Z + 1, PARK_Z + 12, carZ(u));
+  return -0.17 * Math.sin(t * Math.PI);
+}
+
+/** Offset of the left lane's centre from the road's centre line. */
+const LANE_X = 2.1;
+
 export type Act = {
   slug: string;
   /** Camera at the hold, landscape framing. */
@@ -62,6 +76,11 @@ export type Act = {
   portraitPosition: Vec3;
   portraitTarget: Vec3;
   fov?: number;
+  /**
+   * A push-in over the dwell: the camera moves from the hold to this pose over the first
+   * part of the dwell, stays, and comes back out before the leave.
+   */
+  push?: { position: Vec3; target: Vec3; fov: number; via?: Vec3 };
 };
 
 export const ACTS: readonly Act[] = [
@@ -92,6 +111,10 @@ export const ACTS: readonly Act[] = [
     target: [0.3, 0.7, 0.3],
     portraitPosition: [-3.4, 2.2, -4.2],
     portraitTarget: [0.2, 0.7, 0.3],
+    // In behind the open door, over the rear quarter, looking forward and down through
+    // the aperture at the seat and footwell under the brush; then back out. The way in
+    // bends over the car's flank to clear the lift post.
+    push: { position: [-2.1, 1.6, 1.35], target: [-0.45, 0.5, -0.05], fov: 40, via: [-1.6, 1.95, -1.2] },
   },
   {
     slug: "correct",
@@ -196,7 +219,7 @@ const CHASE_PORTRAIT = { offset: [1.4, 2.0, 9.5] as Vec3, look: [0, 0.8, -2] as 
 /** The camera flies in through the doorway on its way from the forecourt to the wash bay. */
 const DOOR: Vec3 = [-1.8, 2.0, 10.5];
 /** How far, in radians, the camera swings round the car over the reveal's dwell. */
-const REVEAL_SWING = 0.85;
+const REVEAL_SWING = 0.55;
 /** A tangent control for the first hold-to-hold segment; never shown. */
 const START: { position: Vec3; target: Vec3 } = { position: [8, 1.5, 24], target: [0, 0.8, 11] };
 /** After the last hold the camera rises toward the ceiling, looking down at the car, while the DOM takes over. */
@@ -226,9 +249,10 @@ export function bayLayout(outroSpan = OUTRO_SPAN): WorldLayout {
       // as it pulls up.
       if (u < pullUp) {
         const z = carZ(u);
+        const x = carX(u);
         const chase = portrait ? CHASE_PORTRAIT : CHASE;
-        const cp: Vec3 = [chase.offset[0], chase.offset[1], z + chase.offset[2]];
-        const ct: Vec3 = [chase.look[0], chase.look[1], z + chase.look[2]];
+        const cp: Vec3 = [x + chase.offset[0], chase.offset[1], z + chase.offset[2]];
+        const ct: Vec3 = [x + chase.look[0], chase.look[1], z + chase.look[2]];
         const w = smooth(unlerp(0.42, 1, u / pullUp));
         return { position: mix(cp, arrive.position, w), target: mix(ct, arrive.target, w), fov: 50 };
       }
@@ -245,6 +269,23 @@ export function bayLayout(outroSpan = OUTRO_SPAN): WorldLayout {
         return { position, target, fov: lerp(50, fovs[2]!, t) };
       }
 
+      // Acts with a push-in: dolly in over the first third of the dwell, hold, and come
+      // back out over the last third, so the leave starts from the hold pose again.
+      for (let i = 0; i < ACT_COUNT; i++) {
+        const push = ACTS[i]!.push;
+        if (!push) continue;
+        const start = dwellStart(i);
+        if (u < start || u > start + DWELL_SPAN) continue;
+        const d = (u - start) / DWELL_SPAN;
+        const k = smooth(unlerp(0.02, 0.34, d)) * (1 - smooth(unlerp(0.66, 0.98, d)));
+        const hold = poses[i + 1]!;
+        return {
+          position: push.via ? bezier(hold.position, push.via, push.position, k) : mix(hold.position, push.position, k),
+          target: mix(hold.target, push.target, k),
+          fov: lerp(fovs[i + 1]!, push.fov, k),
+        };
+      }
+
       // The reveal: over its dwell the camera swings slowly round the front of the finished
       // car, and the outro carries on from wherever that swing ended.
       const reveal = poses[ACT_COUNT]!;
@@ -252,10 +293,13 @@ export function bayLayout(outroSpan = OUTRO_SPAN): WorldLayout {
       const orbit = (d: number): Vec3 => {
         const [px, py, pz] = reveal.position;
         const [tx, , tz] = reveal.target;
-        const ang = smooth(d) * REVEAL_SWING;
-        const dx = px - tx;
-        const dz = pz - tz;
-        return [tx + dx * Math.cos(ang) - dz * Math.sin(ang), py - smooth(d) * 0.35, tz + dx * Math.sin(ang) + dz * Math.cos(ang)];
+        const k = smooth(d);
+        // Swing toward the nose and dolly in as it goes, so the arc stays inside the bay.
+        const ang = -k * REVEAL_SWING;
+        const r = 1 - k * 0.3;
+        const dx = (px - tx) * r;
+        const dz = (pz - tz) * r;
+        return [tx + dx * Math.cos(ang) - dz * Math.sin(ang), py - k * 0.35, tz + dx * Math.sin(ang) + dz * Math.cos(ang)];
       };
       if (u >= revealStart && u < revealStart + DWELL_SPAN) {
         return { position: orbit((u - revealStart) / DWELL_SPAN), target: reveal.target, fov: fovs[ACT_COUNT]! };

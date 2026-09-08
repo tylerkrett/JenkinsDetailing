@@ -6,7 +6,7 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Color, Fog, type Group, type Mesh, type SpotLight } from "three";
 
 import { lerp, unlerp } from "~/lib/motion";
-import { ACT_COUNT, BAY, CAR, DRIVE_FROM_Z, DWELL_SPAN, actState, carZ, dwellStart, totalTravel } from "~/lib/scene/bay-layout";
+import { ACT_COUNT, BAY, CAR, DRIVE_FROM_Z, DWELL_SPAN, actState, carX, carYaw, carZ, dwellStart, totalTravel } from "~/lib/scene/bay-layout";
 import {
   LIME,
   makeBlockworkTexture,
@@ -49,6 +49,8 @@ export function Bay({ mobile }: Props) {
   const car = useRef<Group>(null);
   const carFrame = useRef<CarFrame>({
     driveIn: 0,
+    x: 0,
+    yaw: 0,
     lift: 0,
     wheelsOff: 0,
     door: 0,
@@ -134,13 +136,15 @@ export function Bay({ mobile }: Props) {
     const door = act === 3 ? smooth(unlerp(0, 0.12, dwell)) * (1 - smooth(unlerp(0.9, 1, dwell))) : 0;
     const cf = carFrame.current;
     cf.driveIn = driveIn;
+    cf.x = act > 0 ? 0 : carX(u);
+    cf.yaw = act > 0 ? 0 : carYaw(u);
     cf.lift = lift;
     cf.wheelsOff = wheelsOff;
     cf.door = door;
     // Headlights: on for the drive-in until parked; on again at the end of the reveal.
     cf.headlights = act === 0 ? 1 - smooth(unlerp(0.86, 1, dwell)) : act === ACT_COUNT - 1 ? smooth(unlerp(0.7, 0.85, dwell)) : 0;
     const g = car.current;
-    if (g) g.position.set(0, lift * BAY.liftHeight, lerp(DRIVE_FROM_Z, 0, driveIn));
+    if (g) g.position.set(cf.x, lift * BAY.liftHeight, lerp(DRIVE_FROM_Z, 0, driveIn));
   });
 
   const W = BAY.halfW;

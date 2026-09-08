@@ -10,7 +10,7 @@
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { z } from "zod";
+import { type z } from "zod";
 
 import {
   packagesSchema,

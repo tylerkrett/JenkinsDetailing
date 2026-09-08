@@ -15,6 +15,9 @@ const PAINT = new Color("#132264");
 export type CarFrame = {
   /** 0..1 how far the car has driven in from the road (act 1). */
   driveIn: number;
+  /** Sideways offset and heading during the drive-in (the lane, the turn in). */
+  x: number;
+  yaw: number;
   /** 0..1 how high the lift has taken it (act 3). */
   lift: number;
   /** 0..1 how far the wheels are off and set aside (act 3). */
@@ -220,7 +223,8 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
     tickShell(foam, dt);
     tickShell(haze, dt);
     const drive = driveFromZ * (1 - f.driveIn);
-    g.position.set(0, f.lift * BAY.liftHeight, drive);
+    g.position.set(f.x, f.lift * BAY.liftHeight, drive);
+    g.rotation.y = f.yaw;
 
     // Wheels roll with the drive-in (angle = distance / radius about the axle, the
     // model's local X), and come off in act 3: each drops to the floor beside the car.

@@ -301,10 +301,10 @@ export function makePosterTexture(): Texture {
 export function makeTarmacTexture(seed = 7): Texture {
   const { c, g } = canvas(512);
   const r = rng(seed);
-  g.fillStyle = "#1a1c20";
+  g.fillStyle = "#111215";
   g.fillRect(0, 0, 512, 512);
   for (let i = 0; i < 9000; i++) {
-    const v = 30 + r() * 60;
+    const v = 20 + r() * 40;
     g.fillStyle = `rgba(${v},${v},${v + 6},${0.5 + r() * 0.5})`;
     g.fillRect(r() * 512, r() * 512, 1 + r() * 2, 1 + r() * 2);
   }
@@ -329,4 +329,267 @@ export function tint(hex: string, k: number) {
   const col = new Color(hex);
   col.multiplyScalar(k);
   return col;
+}
+
+/**
+ * Asphalt with a broken white centre line and a single yellow line along each kerb.
+ * The tile is 9 m wide by 6 m long: one dash period. Repeat it along the road only.
+ */
+export function makeRoadTexture(seed = 8): Texture {
+  const W = 384;
+  const H = 256;
+  const { c, g } = canvas(W, H);
+  const r = rng(seed);
+  const px = W / 9;
+  g.fillStyle = "#0f1013";
+  g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 7000; i++) {
+    const v = 18 + r() * 34;
+    g.fillStyle = `rgba(${v},${v},${v + 4},${0.5 + r() * 0.5})`;
+    g.fillRect(r() * W, r() * H, 1 + r() * 2, 1 + r() * 2);
+  }
+  // Tyre tracks: two darker bands in each lane, polished a little.
+  for (const x of [-3.0, -1.7, 1.7, 3.0]) {
+    const grad = g.createLinearGradient((x - 0.35 + 4.5) * px, 0, (x + 0.35 + 4.5) * px, 0);
+    grad.addColorStop(0, "rgba(0,0,0,0)");
+    grad.addColorStop(0.5, "rgba(0,0,0,0.28)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = grad;
+    g.fillRect((x - 0.35 + 4.5) * px, 0, 0.7 * px, H);
+  }
+  // Centre dash: 2 m line, 4 m gap; worn at the edges.
+  g.fillStyle = "rgba(226,226,214,0.82)";
+  g.fillRect(4.44 * px, 0, 0.12 * px, (2 / 6) * H);
+  // Single yellow lines by the kerbs.
+  g.fillStyle = "rgba(214,176,52,0.72)";
+  g.fillRect(0.3 * px, 0, 0.1 * px, H);
+  g.fillRect(W - 0.4 * px, 0, 0.1 * px, H);
+  return texture(c);
+}
+
+/** Pavement slabs, 0.6 m, with darker joints, some cracked and stained. Tile is 2.4 m. */
+export function makePavingTexture(seed = 9): Texture {
+  const { c, g } = canvas(256);
+  const r = rng(seed);
+  g.fillStyle = "#3b3d42";
+  g.fillRect(0, 0, 256, 256);
+  const cell = 64;
+  for (let y = 0; y < 4; y++) {
+    for (let x = 0; x < 4; x++) {
+      const v = 78 + r() * 26;
+      g.fillStyle = `rgb(${v},${v + 1},${v + 3})`;
+      g.fillRect(x * cell + 2, y * cell + 2, cell - 4, cell - 4);
+      for (let i = 0; i < 40; i++) {
+        const s = 60 + r() * 50;
+        g.fillStyle = `rgba(${s},${s},${s},0.5)`;
+        g.fillRect(x * cell + 2 + r() * (cell - 4), y * cell + 2 + r() * (cell - 4), 1.5, 1.5);
+      }
+      if (r() < 0.25) {
+        g.fillStyle = "rgba(0,0,0,0.18)";
+        g.beginPath();
+        g.ellipse(x * cell + r() * cell, y * cell + r() * cell, 10 + r() * 14, 6 + r() * 10, r() * 3, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+  }
+  return texture(c);
+}
+
+export type ShopSpec = {
+  name: string;
+  /** A second line on the fascia, small. */
+  sub?: string;
+  /** Facade width in metres; the texture is drawn to fit it. */
+  width: number;
+  /** Render colour of the upper storey, or "stone". */
+  wall: string;
+  /** The painted shopfront joinery and fascia. */
+  frame: string;
+  /** Fascia lettering colour. */
+  letter: string;
+  /** Upper-floor windows lit, one flag per window. */
+  lit: boolean[];
+  /** The shop window: lit and open, or dark with the blinds down. */
+  open: boolean;
+  seed: number;
+};
+
+/** The facade height, in metres, the shopfront textures are drawn for. */
+export const SHOP_HEIGHT = 7.2;
+
+/**
+ * A two-storey Welsh high-street shop: painted shopfront with a big lit window and a
+ * fascia, rendered or stone upper floor with sash windows, eaves and a downpipe. Returns
+ * the colour map and an emissive map of just the lit glass.
+ */
+export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Texture } {
+  const W = 512;
+  const H = 640;
+  const { c, g } = canvas(W, H);
+  const { c: gc, g: gg } = canvas(W, H);
+  const r = rng(spec.seed);
+  const sx = W / spec.width;
+  const sy = H / SHOP_HEIGHT;
+  /** A rectangle in metres from the ground up. */
+  const rect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string | CanvasGradient) => {
+    ctx.fillStyle = fill;
+    ctx.fillRect(x * sx, H - (y + h) * sy, w * sx, h * sy);
+  };
+  const w = spec.width;
+
+  gg.fillStyle = "#000";
+  gg.fillRect(0, 0, W, H);
+
+  // The wall.
+  if (spec.wall === "stone") {
+    g.fillStyle = "#5c5750";
+    g.fillRect(0, 0, W, H);
+    let y = 0;
+    while (y < H) {
+      const h = 22 + r() * 18;
+      let x = -20;
+      while (x < W) {
+        const bw = 34 + r() * 50;
+        const tone = 96 + r() * 50;
+        const warm = r() * 18;
+        g.fillStyle = `rgb(${Math.round(tone + warm)},${Math.round(tone + warm * 0.6)},${Math.round(tone - warm * 0.3)})`;
+        g.beginPath();
+        g.roundRect(x + 2, y + 2, bw - 4, h - 4, 4);
+        g.fill();
+        x += bw;
+      }
+      y += h;
+    }
+  } else {
+    g.fillStyle = spec.wall;
+    g.fillRect(0, 0, W, H);
+    for (let i = 0; i < 2500; i++) {
+      const a = r();
+      g.fillStyle = a < 0.5 ? `rgba(0,0,0,${0.03 + r() * 0.06})` : `rgba(255,255,255,${0.02 + r() * 0.05})`;
+      g.fillRect(r() * W, r() * H, 1 + r() * 3, 1 + r() * 3);
+    }
+  }
+  // Weather: grime at the foot, a streak under the gutter.
+  const grime = g.createLinearGradient(0, H - 3.6 * sy, 0, H);
+  grime.addColorStop(0, "rgba(0,0,0,0)");
+  grime.addColorStop(1, "rgba(0,0,0,0.25)");
+  g.fillStyle = grime;
+  g.fillRect(0, H - 3.6 * sy, W, 3.6 * sy);
+  rect(g, 0, SHOP_HEIGHT - 0.28, w, 0.28, "#2b2e34");
+  rect(g, 0, SHOP_HEIGHT - 0.34, w, 0.06, "#1d1f24");
+  // String course between the floors.
+  rect(g, 0, 3.42, w, 0.1, "rgba(255,255,255,0.18)");
+  // Downpipe.
+  rect(g, w - 0.22, 0, 0.09, SHOP_HEIGHT - 0.3, "#23262b");
+
+  // Upper floor: sash windows.
+  const n = w > 5.6 ? 3 : 2;
+  const winW = 0.95;
+  const winH = 1.45;
+  const gap = (w - 0.5 - n * winW) / (n + 1);
+  for (let i = 0; i < n; i++) {
+    const x = 0.25 + gap + i * (winW + gap);
+    const y = 4.35;
+    rect(g, x - 0.1, y - 0.12, winW + 0.2, 0.12, "#d7d2c6"); // sill
+    rect(g, x - 0.06, y, winW + 0.12, winH + 0.08, "#e9e6df"); // frame
+    const lit = spec.lit[i] ?? false;
+    if (lit) {
+      const grad = g.createLinearGradient(0, H - (y + winH) * sy, 0, H - y * sy);
+      grad.addColorStop(0, "#ffd79a");
+      grad.addColorStop(1, "#f0b25c");
+      rect(g, x, y, winW, winH, grad);
+      // Half-drawn curtain.
+      rect(g, x, y, winW * (0.3 + r() * 0.25), winH, "rgba(120,60,50,0.75)");
+      rect(gg, x, y, winW, winH, "#ffb45c");
+      rect(gg, x, y, winW * 0.35, winH, "#3a1a12");
+    } else {
+      rect(g, x, y, winW, winH, "#161c28");
+      rect(g, x + 0.1, y + 0.2, winW * 0.35, winH * 0.6, "rgba(120,140,170,0.16)");
+      rect(gg, x, y, winW, winH, "#0a0f18");
+    }
+    rect(g, x + winW / 2 - 0.02, y, 0.04, winH, "#e9e6df");
+    rect(g, x, y + winH / 2 - 0.02, winW, 0.04, "#e9e6df");
+  }
+
+  // Ground floor shopfront: pilasters, stall riser, window, door, fascia.
+  rect(g, 0.1, 0, w - 0.2, 3.4, spec.frame);
+  rect(g, 0.1, 0, w - 0.2, 3.4, "rgba(0,0,0,0.12)");
+  const doorW = 1.0;
+  const doorX = w - 0.4 - doorW;
+  const winX = 0.45;
+  const winWidth = doorX - 0.25 - winX;
+  // Stall riser with a little moulding.
+  rect(g, winX, 0.05, winWidth, 0.6, spec.frame);
+  rect(g, winX + 0.08, 0.14, winWidth - 0.16, 0.42, "rgba(0,0,0,0.22)");
+  // The window: warm and full, or blinds down.
+  if (spec.open) {
+    const grad = g.createLinearGradient(0, H - 2.55 * sy, 0, H - 0.65 * sy);
+    grad.addColorStop(0, "#ffe2b0");
+    grad.addColorStop(0.5, "#ffc978");
+    grad.addColorStop(1, "#d98a3a");
+    rect(g, winX, 0.65, winWidth, 1.9, grad);
+    // Shelves and goods as silhouettes, and a hanging pendant or two.
+    for (let s = 0; s < 3; s++) {
+      const y = 0.85 + s * 0.55;
+      rect(g, winX + 0.15, y, winWidth - 0.3, 0.05, "rgba(70,40,20,0.75)");
+      let gx = winX + 0.2;
+      while (gx < winX + winWidth - 0.3) {
+        const gw = 0.12 + r() * 0.25;
+        const gh = 0.15 + r() * 0.3;
+        const hue = Math.floor(r() * 360);
+        rect(g, gx, y + 0.05, gw, gh, `hsla(${hue},45%,${28 + r() * 20}%,0.85)`);
+        gx += gw + 0.06 + r() * 0.12;
+      }
+    }
+    for (let p = 0; p < 2; p++) {
+      const px = winX + winWidth * (0.3 + p * 0.4);
+      rect(g, px - 0.01, 2.15, 0.02, 0.4, "rgba(40,20,10,0.8)");
+      rect(g, px - 0.14, 2.0, 0.28, 0.16, "rgba(255,240,200,0.95)");
+    }
+    // Reflection streak across the glass.
+    g.fillStyle = "rgba(255,255,255,0.10)";
+    g.beginPath();
+    g.moveTo((winX + winWidth * 0.55) * sx, H - 2.55 * sy);
+    g.lineTo((winX + winWidth * 0.8) * sx, H - 2.55 * sy);
+    g.lineTo((winX + winWidth * 0.35) * sx, H - 0.65 * sy);
+    g.lineTo((winX + winWidth * 0.1) * sx, H - 0.65 * sy);
+    g.closePath();
+    g.fill();
+    const glow = gg.createLinearGradient(0, H - 2.55 * sy, 0, H - 0.65 * sy);
+    glow.addColorStop(0, "#ffd9a6");
+    glow.addColorStop(1, "#c77d33");
+    rect(gg, winX, 0.65, winWidth, 1.9, glow);
+    for (let s = 0; s < 3; s++) rect(gg, winX + 0.15, 0.85 + s * 0.55, winWidth - 0.3, 0.05, "rgba(0,0,0,0.5)");
+  } else {
+    rect(g, winX, 0.65, winWidth, 1.9, "#1a2230");
+    for (let s = 0; s < 14; s++) rect(g, winX, 0.7 + s * 0.13, winWidth, 0.06, "rgba(200,190,170,0.16)");
+    rect(gg, winX, 0.65, winWidth, 1.9, "#101620");
+  }
+  // Glazing bars.
+  rect(g, winX + winWidth / 2 - 0.02, 0.65, 0.04, 1.9, spec.frame);
+  // The door: panelled below, glass above, a lit fanlight.
+  rect(g, doorX, 0.05, doorW, 2.5, spec.frame);
+  rect(g, doorX + 0.08, 0.15, doorW - 0.16, 0.9, "rgba(0,0,0,0.25)");
+  rect(g, doorX + 0.08, 1.2, doorW - 0.16, 1.2, spec.open ? "#f2c07a" : "#151c28");
+  rect(gg, doorX + 0.08, 1.2, doorW - 0.16, 1.2, spec.open ? "#d99a4a" : "#0a0f18");
+  rect(g, doorX + doorW - 0.2, 1.05, 0.05, 0.12, "#d9c26a");
+  // Fascia with the name.
+  rect(g, 0.1, 2.68, w - 0.2, 0.62, spec.frame);
+  rect(g, 0.1, 2.66, w - 0.2, 0.04, "rgba(255,255,255,0.25)");
+  rect(g, 0.1, 3.3, w - 0.2, 0.05, "rgba(0,0,0,0.35)");
+  g.fillStyle = spec.letter;
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  const size = Math.min(0.36 * sy, ((w - 0.8) * sx) / Math.max(6, spec.name.length) / 0.62);
+  g.font = `bold ${Math.round(size)}px Archivo, "Helvetica Neue", Arial, sans-serif`;
+  g.fillText(spec.name.toUpperCase(), (w / 2) * sx, H - (spec.sub ? 3.08 : 2.99) * sy);
+  if (spec.sub) {
+    g.font = `${Math.round(0.14 * sy)}px Figtree, Arial, sans-serif`;
+    g.fillText(spec.sub, (w / 2) * sx, H - 2.82 * sy);
+  }
+  // A bracket lamp over the fascia, lit.
+  rect(g, w / 2 - 0.12, 3.34, 0.24, 0.06, "#1a1c22");
+  rect(gg, 0.3, 2.6, w - 0.6, 0.8, "rgba(255,190,120,0.18)");
+
+  return { map: texture(c, false), glow: texture(gc, false, false) };
 }
