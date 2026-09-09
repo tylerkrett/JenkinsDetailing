@@ -41,14 +41,18 @@ export function StationCaption({ items }: Props) {
     const plateauUnits = world.spans.station * world.plateau;
     const span = ((world.spans.station - plateauUnits) * 0.4) / total;
     const plateau = plateauUnits / total;
-    return useScene.subscribe((s) => {
+    const apply = (s: ReturnType<typeof useScene.getState>) => {
       const start = world.holdProgress(s.station);
       const end = start + plateau;
       const d = s.progress < start ? start - s.progress : s.progress > end ? s.progress - end : 0;
       const opacity = String(Math.max(0, 1 - d / span));
       if (block.current) block.current.style.opacity = opacity;
       if (bar.current) bar.current.style.opacity = opacity;
-    });
+    };
+    // Set it from where the scroll already is: subscribing alone leaves the caption at
+    // its markup opacity until something moves, which showed it over the opening frame.
+    apply(useScene.getState());
+    return useScene.subscribe(apply);
   }, [world]);
 
   if (!a || !ready) return null;
@@ -68,7 +72,7 @@ export function StationCaption({ items }: Props) {
       {/* Wide screens: a block bottom-left, beside the car. */}
       <div
         ref={block}
-        className="pointer-events-none fixed bottom-10 left-6 z-20 hidden max-w-[min(40ch,26vw)] sm:left-10 sm:block"
+        className="pointer-events-none fixed bottom-10 left-6 z-20 hidden max-w-[min(40ch,26vw)] opacity-0 sm:left-10 sm:block"
       >
         <div
           aria-hidden="true"
@@ -94,7 +98,7 @@ export function StationCaption({ items }: Props) {
       {/* Phones: a bar along the bottom, under the car, over a scrim. */}
       <div
         ref={bar}
-        className="from-ink via-ink/85 pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t to-transparent px-5 pt-14 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:hidden"
+        className="from-ink via-ink/85 pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t to-transparent px-5 pt-14 pb-[calc(1.25rem+env(safe-area-inset-bottom))] opacity-0 sm:hidden"
       >
         <div key={a.slug} className="caption-in flex items-end justify-between gap-4">
           <div className="min-w-0">

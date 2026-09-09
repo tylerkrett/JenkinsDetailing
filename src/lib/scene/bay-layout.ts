@@ -13,7 +13,12 @@ import type { CameraPose, Vec3, WorldLayout } from "./world";
  */
 
 export const ACT_COUNT = 7;
-export const THRESHOLD_SPAN = 6;
+/**
+ * Scroll before act 1's approach begins. Kept short: the drive in is the same camera
+ * move over the same road either way, and a long threshold only means more scrolling
+ * before the chapter card rises. At 1 the page opens just short of the ARRIVE card.
+ */
+export const THRESHOLD_SPAN = 1;
 export const APPROACH_SPAN = 14;
 export const DWELL_SPAN = 12;
 export const OUTRO_SPAN = 18;
@@ -35,8 +40,14 @@ export const BAY = {
 /** Car footprint the placeholder and the camera framing agree on. */
 export const CAR = { length: 4.5, width: 1.95, height: 1.2 } as const;
 
-/** Where the car starts its drive-in, down the road, and where it pulls up on the forecourt. */
-export const DRIVE_FROM_Z = 40;
+/**
+ * Where the car starts its drive-in, down the road, and where it pulls up on the
+ * forecourt. The page opens on this frame, so it starts level with the near end of the
+ * shops (the terrace begins at z 21) rather than away up the street: the whole approach
+ * is in view from the first pixel. It has to stay clear of PARK_Z + 12, where the swing
+ * across to the garage begins, or the car opens mid-turn.
+ */
+export const DRIVE_FROM_Z = 27;
 export const PARK_Z = 11;
 
 /**

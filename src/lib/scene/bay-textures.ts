@@ -297,20 +297,6 @@ export function makePosterTexture(): Texture {
   return texture(c, false);
 }
 
-/** Wet tarmac: dark aggregate with lighter grains and a few puddle patches. */
-export function makeTarmacTexture(seed = 7): Texture {
-  const { c, g } = canvas(512);
-  const r = rng(seed);
-  g.fillStyle = "#111215";
-  g.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 9000; i++) {
-    const v = 20 + r() * 40;
-    g.fillStyle = `rgba(${v},${v},${v + 6},${0.5 + r() * 0.5})`;
-    g.fillRect(r() * 512, r() * 512, 1 + r() * 2, 1 + r() * 2);
-  }
-  return texture(c);
-}
-
 /** An overcast evening sky: blue-grey, lighter and warmer at the horizon, as a gradient. */
 export function makeSkyTexture(): Texture {
   const { c, g } = canvas(64, 512);
@@ -592,4 +578,221 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
   rect(gg, 0.3, 2.6, w - 0.6, 0.8, "rgba(255,190,120,0.18)");
 
   return { map: texture(c, false), glow: texture(gc, false, false) };
+}
+
+/**
+ * Forecourt tarmac worn by use: darker than the road, with oil stains, patched repairs
+ * and the ghosts of old painted lines. The tile is 6 m square; repeat it over the apron.
+ */
+export function makeForecourtTexture(seed = 41): Texture {
+  const { c, g } = canvas(512);
+  const r = rng(seed);
+  g.fillStyle = "#131418";
+  g.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 9000; i++) {
+    const v = 22 + r() * 42;
+    g.fillStyle = `rgba(${v},${v},${v + 6},${0.5 + r() * 0.5})`;
+    g.fillRect(r() * 512, r() * 512, 1 + r() * 2, 1 + r() * 2);
+  }
+  // Patched repairs: squarish areas of newer, flatter blacktop.
+  for (let i = 0; i < 5; i++) {
+    const x = r() * 460;
+    const y = r() * 460;
+    g.fillStyle = `rgba(8,9,12,${0.35 + r() * 0.3})`;
+    g.fillRect(x, y, 40 + r() * 90, 30 + r() * 70);
+  }
+  // Oil drips and the odd spreading stain where a car has stood.
+  for (let i = 0; i < 26; i++) {
+    const x = r() * 512;
+    const y = r() * 512;
+    const rad = 3 + r() * 22;
+    const grad = g.createRadialGradient(x, y, 0, x, y, rad);
+    grad.addColorStop(0, "rgba(0,0,0,0.55)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = grad;
+    g.beginPath();
+    g.ellipse(x, y, rad, rad * (0.5 + r() * 0.6), r() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  return texture(c);
+}
+
+/**
+ * A puddle: a soft-edged blob, white in the centre and black at the rim. Used as the
+ * alpha of a wet patch laid over the tarmac — three reads the green channel of an
+ * alphaMap, not its alpha, so the falloff has to be drawn in luminance on an opaque
+ * black ground rather than as transparency.
+ */
+export function makePuddleTexture(seed = 42): Texture {
+  const { c, g } = canvas(256);
+  const r = rng(seed);
+  g.fillStyle = "#000000";
+  g.fillRect(0, 0, 256, 256);
+  // A few overlapping blobs make an irregular outline; each fades at its own rim.
+  g.globalCompositeOperation = "lighter";
+  for (let i = 0; i < 6; i++) {
+    const x = 128 + (r() * 2 - 1) * 40;
+    const y = 128 + (r() * 2 - 1) * 40;
+    const rad = 40 + r() * 46;
+    const grad = g.createRadialGradient(x, y, rad * 0.3, x, y, rad);
+    grad.addColorStop(0, "rgba(255,255,255,1)");
+    grad.addColorStop(0.6, "rgba(150,150,150,1)");
+    grad.addColorStop(1, "rgba(0,0,0,1)");
+    g.fillStyle = grad;
+    g.beginPath();
+    g.arc(x, y, rad, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.globalCompositeOperation = "source-over";
+  return texture(c, false, false);
+}
+
+/** Foliage: dark mottled green, for hedges and the tree canopies at dusk. */
+export function makeFoliageTexture(seed = 43): Texture {
+  const { c, g } = canvas(256);
+  const r = rng(seed);
+  g.fillStyle = "#16240f";
+  g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 2600; i++) {
+    const v = r();
+    const hue = v < 0.18 ? "#2f4a1e" : v < 0.45 ? "#233a17" : v < 0.8 ? "#182a10" : "#0d1a09";
+    g.fillStyle = hue;
+    const s = 3 + r() * 9;
+    g.beginPath();
+    g.ellipse(r() * 256, r() * 256, s, s * 0.6, r() * 3, 0, Math.PI * 2);
+    g.fill();
+  }
+  return texture(c);
+}
+
+/** The Prince of Wales feathers: three plumes over a coronet, as the totem carries them. */
+function drawFeathers(g: CanvasRenderingContext2D, cx: number, cy: number, h: number, colour: string) {
+  const plume = (lean: number, scale: number) => {
+    g.save();
+    g.translate(cx, cy);
+    g.rotate(lean);
+    g.scale(scale, scale);
+    const w = h * 0.3;
+    g.fillStyle = colour;
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.bezierCurveTo(-w * 1.15, -h * 0.34, -w * 0.92, -h * 0.78, 0, -h);
+    g.bezierCurveTo(w * 0.92, -h * 0.78, w * 1.15, -h * 0.34, 0, 0);
+    g.fill();
+    // Barbs: a spine and a few ribs, so the plume doesn't read as a flat leaf.
+    g.strokeStyle = "rgba(255,255,255,0.55)";
+    g.lineWidth = h * 0.022;
+    g.beginPath();
+    g.moveTo(0, -h * 0.06);
+    g.lineTo(0, -h * 0.9);
+    g.stroke();
+    for (let i = 1; i <= 5; i++) {
+      const y = -h * (0.18 + i * 0.13);
+      const sp = w * (0.78 - i * 0.1);
+      g.beginPath();
+      g.moveTo(0, y);
+      g.lineTo(-sp, y + h * 0.07);
+      g.moveTo(0, y);
+      g.lineTo(sp, y + h * 0.07);
+      g.stroke();
+    }
+    g.restore();
+  };
+  plume(-0.62, 0.82);
+  plume(0.62, 0.82);
+  plume(0, 1);
+
+  // The coronet the plumes rise out of, and the ribbon under it.
+  g.fillStyle = colour;
+  const cw = h * 0.46;
+  g.beginPath();
+  g.roundRect(cx - cw, cy - h * 0.02, cw * 2, h * 0.14, h * 0.03);
+  g.fill();
+  for (const o of [-0.72, 0, 0.72]) {
+    g.beginPath();
+    g.arc(cx + o * cw, cy - h * 0.05, h * 0.05, 0, Math.PI * 2);
+    g.fill();
+  }
+  g.beginPath();
+  g.moveTo(cx - cw * 1.35, cy + h * 0.16);
+  g.quadraticCurveTo(cx, cy + h * 0.3, cx + cw * 1.35, cy + h * 0.16);
+  g.quadraticCurveTo(cx, cy + h * 0.22, cx - cw * 1.35, cy + h * 0.16);
+  g.fill();
+}
+
+/**
+ * The forecourt totem by the road, drawn as the real one on the Tregaron forecourt is:
+ * a white board with the feathers and the name at the top, three banded service panels
+ * with their displays dark for the night, and the red block of what the garage does.
+ * Portrait, and only ever mapped to the board's two faces — never its edges.
+ */
+export function makeTotemTexture(): Texture {
+  const W = 512;
+  const H = 1650;
+  const { c, g } = canvas(W, H);
+  const RED = "#8e1b2e";
+  const GREEN = "#0f7a4a";
+  const BLOCK = "#b01c2e";
+  g.fillStyle = "#f7f6f2";
+  g.fillRect(0, 0, W, H);
+
+  drawFeathers(g, W / 2, 300, 190, RED);
+
+  g.fillStyle = RED;
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.font = 'bold 104px Archivo, "Helvetica Neue", Arial, sans-serif';
+  g.fillText("Jenkins", W / 2, 452);
+  g.font = '46px Archivo, "Helvetica Neue", Arial, sans-serif';
+  g.fillText("Garej Ganolog", W / 2, 524);
+
+  // Three service panels: a coloured header over a dark display.
+  const M = 26;
+  const panels: [string, string][] = [
+    ["Valeting", GREEN],
+    ["Detailing", GREEN],
+    ["Protection", BLOCK],
+  ];
+  panels.forEach(([label, colour], i) => {
+    const top = 604 + i * 228;
+    g.fillStyle = colour;
+    g.fillRect(M, top, W - M * 2, 54);
+    g.fillStyle = "#ffffff";
+    g.textAlign = "left";
+    g.font = 'bold 38px Archivo, "Helvetica Neue", Arial, sans-serif';
+    g.fillText(label, M + 16, top + 29);
+    g.fillStyle = "#24242a";
+    g.fillRect(M, top + 54, W - M * 2, 152);
+    // A glass reflection across the display, so it reads as a panel and not a hole.
+    const sheen = g.createLinearGradient(M, top + 54, W - M, top + 206);
+    sheen.addColorStop(0, "rgba(255,255,255,0.09)");
+    sheen.addColorStop(0.5, "rgba(255,255,255,0.02)");
+    sheen.addColorStop(1, "rgba(255,255,255,0.07)");
+    g.fillStyle = sheen;
+    g.fillRect(M, top + 54, W - M * 2, 152);
+  });
+
+  // What the garage does, in the red block at the foot. Each line is set at the biggest
+  // size that still fits the block, so the long ones aren't cut off at the edges.
+  g.fillStyle = BLOCK;
+  g.fillRect(M, 1300, W - M * 2, 300);
+  g.fillStyle = "#ffffff";
+  g.textAlign = "center";
+  const fit = W - M * 2 - 28;
+  ["SERVICING", "MOT's", "VALETING & DETAILING", "PAINT PROTECTION"].forEach((line, i) => {
+    let size = 42;
+    do {
+      g.font = `bold ${size}px Archivo, "Helvetica Neue", Arial, sans-serif`;
+      size -= 1;
+    } while (g.measureText(line).width > fit && size > 16);
+    g.fillText(line, W / 2, 1358 + i * 64);
+  });
+
+  // Weathering: the board has stood on a wet forecourt for years.
+  const r = rng(53);
+  for (let i = 0; i < 220; i++) {
+    g.fillStyle = `rgba(120,118,110,${r() * 0.09})`;
+    g.fillRect(r() * W, r() * H, 1 + r() * 3, 8 + r() * 60);
+  }
+  return texture(c, false);
 }

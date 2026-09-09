@@ -15,19 +15,36 @@ import {
 
 import { BAY } from "~/lib/scene/bay-layout";
 
+import { Forecourt } from "./forecourt";
 import { Street } from "./street";
 import {
   makeCorrugatedTexture,
   makeRoundelTexture,
   makeSignTexture,
+  makeForecourtTexture,
   makeSkyTexture,
   makeStoneTexture,
-  makeTarmacTexture,
+  makeTotemTexture,
 } from "~/lib/scene/bay-textures";
 
 type Props = { mobile: boolean };
 
 const SODIUM = new Color("#ffb45c");
+
+/**
+ * The stone side building: its walls, the head of the bay opening in its front, and the
+ * ridge its roof rises to. The pitch follows from the depth and the rise, so the slopes
+ * and the gables always agree.
+ */
+const SIDE = { w: 12, d: 8, h: 3.2, head: 2.9, ridge: 4.5 } as const;
+const SIDE_PITCH = Math.atan((SIDE.ridge - SIDE.h) / (SIDE.d / 2));
+
+/** The stone house on the left of the garage: its walls, and the ridge over them. */
+const HOUSE = { w: 9, d: 8.5, h: 6.8, ridge: 8.7 } as const;
+const HOUSE_PITCH = Math.atan((HOUSE.ridge - HOUSE.h) / (HOUSE.d / 2));
+const HOUSE_SLOPE = Math.hypot(HOUSE.d / 2, HOUSE.ridge - HOUSE.h);
+/** How high the lift holds the car off the bay floor. */
+const LIFT = 1.15;
 
 /** The gable above the garage front: a triangle from the eaves to the ridge. */
 function gableShape(halfW: number, eaves: number, ridge: number) {
@@ -80,8 +97,8 @@ export function Exterior({ mobile }: Props) {
     stoneDark.repeat.set(2, 6);
     const corrugated = makeCorrugatedTexture();
     corrugated.repeat.set(10, 1);
-    const tarmac = makeTarmacTexture();
-    tarmac.repeat.set(9, 3);
+    const tarmac = makeForecourtTexture();
+    tarmac.repeat.set(7, 2);
     const house = makeStoneTexture(21);
     house.repeat.set(2, 1.6);
     return {
@@ -92,13 +109,15 @@ export function Exterior({ mobile }: Props) {
       house,
       roundel: makeRoundelTexture(),
       lettering: makeSignTexture("CENTRAL GARAGE", { width: 1024, height: 160, bg: "#f4f1ea", fg: "#1c1f2a" }),
-      totem: makeSignTexture("JENKINS", { width: 256, height: 1024, bg: "#f6f5f0", fg: "#c8102e", font: "bold 44px Archivo, Arial, sans-serif" }),
+      totem: makeTotemTexture(),
       sky: makeSkyTexture(),
     };
   }, []);
   useEffect(() => () => Object.values(tex).forEach((t) => t.dispose()), [tex]);
 
   const gable = useMemo(() => gableShape(6.6, BAY.height + 0.3, BAY.height + 2.4), []);
+  const sideGable = useMemo(() => gableShape(SIDE.d / 2, SIDE.h, SIDE.ridge), []);
+  const houseGable = useMemo(() => gableShape(HOUSE.d / 2, HOUSE.h, HOUSE.ridge), []);
   const Z = BAY.shutterZ;
 
   // Rain as one Points draw call.
@@ -160,6 +179,8 @@ export function Exterior({ mobile }: Props) {
       </mesh>
       {/* The street beyond it. */}
       <Street mobile={mobile} />
+      {/* The yard's own kit, the boundary round it and the hills behind. */}
+      <Forecourt mobile={mobile} />
 
       {/* The gable over the garage front: rendered white, front and back faces. */}
       <mesh position={[0, 0, Z + 0.16]}>
@@ -198,19 +219,140 @@ export function Exterior({ mobile }: Props) {
         </group>
       ))}
 
-      {/* The long stone side building to the right, under its corrugated roof. */}
+      {/* The long stone side building to the right: the second bay, open to the
+          forecourt with a car up on the two-post lift, under a pitched corrugated roof.
+          Built as walls rather than one box so the bay is a real opening with depth. */}
       <group position={[15.5, 0, Z + 2.5]}>
-        <mesh position={[0, 1.6, 0]}>
-          <boxGeometry args={[12, 3.2, 8]} />
+        {/* Back and both ends. */}
+        <mesh position={[0, SIDE.h / 2, -SIDE.d / 2]}>
+          <boxGeometry args={[SIDE.w, SIDE.h, 0.3]} />
           <meshStandardMaterial map={tex.stone} roughness={0.95} />
         </mesh>
-        <mesh position={[0, 3.55, 0]} rotation={[0, 0, 0.16]}>
-          <boxGeometry args={[12.6, 0.12, 8.6]} />
-          <meshStandardMaterial map={tex.corrugated} roughness={0.6} metalness={0.4} />
+        {[-1, 1].map((sx) => (
+          <mesh key={sx} position={[(sx * SIDE.w) / 2, SIDE.h / 2, 0]}>
+            <boxGeometry args={[0.3, SIDE.h, SIDE.d]} />
+            <meshStandardMaterial map={tex.stone} roughness={0.95} />
+          </mesh>
+        ))}
+        {/* The front, in two piers either side of the bay mouth, with its lintel. */}
+        <mesh position={[-4.88, SIDE.h / 2, SIDE.d / 2]}>
+          <boxGeometry args={[2.25, SIDE.h, 0.3]} />
+          <meshStandardMaterial map={tex.stone} roughness={0.95} />
         </mesh>
-        {[-4, -1, 2].map((x) => (
-          <mesh key={x} position={[x, 1.7, -4.02]}>
-            <planeGeometry args={[1.1, 1.2]} />
+        <mesh position={[3.38, SIDE.h / 2, SIDE.d / 2]}>
+          <boxGeometry args={[5.25, SIDE.h, 0.3]} />
+          <meshStandardMaterial map={tex.stone} roughness={0.95} />
+        </mesh>
+        <mesh position={[-1.5, (SIDE.head + SIDE.h) / 2, SIDE.d / 2]}>
+          <boxGeometry args={[4.5, SIDE.h - SIDE.head, 0.3]} />
+          <meshStandardMaterial map={tex.stone} roughness={0.95} />
+        </mesh>
+        {/* The floor inside, and the dark of the far corners. */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+          <planeGeometry args={[SIDE.w, SIDE.d]} />
+          <meshStandardMaterial color="#3a3b3f" roughness={0.85} />
+        </mesh>
+
+        {/* The roof: two slopes to a ridge along the building, and a gable at each end. */}
+        {[-1, 1].map((sz) => (
+          <mesh key={sz} position={[0, (SIDE.h + SIDE.ridge) / 2, (sz * SIDE.d) / 4]} rotation={[sz * SIDE_PITCH, 0, 0]}>
+            <boxGeometry args={[SIDE.w + 0.5, 0.14, SIDE.d / 2 + 0.45]} />
+            <meshStandardMaterial map={tex.corrugated} roughness={0.6} metalness={0.4} />
+          </mesh>
+        ))}
+        <mesh position={[0, SIDE.ridge, 0]}>
+          <boxGeometry args={[SIDE.w + 0.6, 0.16, 0.36]} />
+          <meshStandardMaterial color="#4c5158" roughness={0.7} metalness={0.3} />
+        </mesh>
+        {[-1, 1].map((sx) => (
+          <mesh key={sx} position={[(sx * SIDE.w) / 2, 0, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
+            <shapeGeometry args={[sideGable]} />
+            <meshStandardMaterial map={tex.stone} roughness={0.95} side={2} />
+          </mesh>
+        ))}
+
+        {/* The bay's strip light, and the light it throws over the car and the floor. */}
+        <mesh position={[-1.5, SIDE.head - 0.22, 0.4]}>
+          <boxGeometry args={[3.2, 0.1, 0.34]} />
+          <meshBasicMaterial color={new Color(1.5, 1.55, 1.6)} toneMapped={false} />
+        </mesh>
+        <pointLight color="#cfe0f2" intensity={26} distance={15} decay={2} position={[-1.5, SIDE.head - 0.6, 0.9]} />
+
+        {/* The two-post lift, and the car standing on it. */}
+        <group position={[-1.5, 0, 0.2]}>
+          {[-1.32, 1.32].map((px) => (
+            <group key={px} position={[px, 0, 0]}>
+              <mesh position={[0, 0.06, 0]}>
+                <boxGeometry args={[0.5, 0.12, 0.7]} />
+                <meshStandardMaterial color="#2b2e34" roughness={0.7} metalness={0.35} />
+              </mesh>
+              <mesh position={[0, 1.35, 0]}>
+                <boxGeometry args={[0.26, 2.7, 0.26]} />
+                <meshStandardMaterial color="#1f4fa8" roughness={0.5} metalness={0.4} />
+              </mesh>
+              {/* The arms under the sills, at the height the car is held. */}
+              {[-1, 1].map((sz) => (
+                <mesh key={sz} position={[px < 0 ? 0.55 : -0.55, LIFT, sz * 1.05]}>
+                  <boxGeometry args={[1.1, 0.14, 0.16]} />
+                  <meshStandardMaterial color="#2b2e34" roughness={0.6} metalness={0.4} />
+                </mesh>
+              ))}
+            </group>
+          ))}
+          <mesh position={[0, 2.78, 0]}>
+            <boxGeometry args={[2.9, 0.18, 0.22]} />
+            <meshStandardMaterial color="#1f4fa8" roughness={0.5} metalness={0.4} />
+          </mesh>
+          {/* The car up on it: a plain massing, read at this distance as a silhouette. */}
+          <group position={[0, LIFT + 0.2, 0]}>
+            {/* Sills, then the body over them, then a narrower glasshouse: enough of a
+                step to read as a car rather than a slab at this distance. */}
+            <mesh position={[0, 0.16, 0]}>
+              <boxGeometry args={[1.72, 0.3, 4.2]} />
+              <meshStandardMaterial color="#6e767e" roughness={0.6} metalness={0.4} />
+            </mesh>
+            <mesh position={[0, 0.46, 0.05]}>
+              <boxGeometry args={[1.84, 0.42, 4.3]} />
+              <meshStandardMaterial color="#a8afb6" roughness={0.38} metalness={0.55} />
+            </mesh>
+            <mesh position={[0, 0.83, -0.3]}>
+              <boxGeometry args={[1.54, 0.4, 2.0]} />
+              <meshStandardMaterial color="#1b1f27" roughness={0.24} metalness={0.5} />
+            </mesh>
+            <mesh position={[0, 1.02, -0.3]}>
+              <boxGeometry args={[1.46, 0.06, 1.9]} />
+              <meshStandardMaterial color="#a8afb6" roughness={0.38} metalness={0.55} />
+            </mesh>
+            {/* The wheels hang below the sills, as they do on a raised car. */}
+            {[-1, 1].flatMap((sx) =>
+              [-1.42, 1.42].map((oz) => (
+                <mesh key={`${sx}${oz}`} position={[sx * 0.84, -0.16, oz]} rotation={[0, 0, Math.PI / 2]}>
+                  <cylinderGeometry args={[0.32, 0.32, 0.2, 12]} />
+                  <meshStandardMaterial color="#15161a" roughness={0.95} />
+                </mesh>
+              )),
+            )}
+          </group>
+        </group>
+
+        {/* A bench down the back wall of the bay, and a wheeled tool chest. */}
+        <mesh position={[-2.6, 0.85, -3.4]}>
+          <boxGeometry args={[4.4, 0.1, 0.7]} />
+          <meshStandardMaterial color="#6b5537" roughness={0.9} />
+        </mesh>
+        <mesh position={[-2.6, 0.42, -3.4]}>
+          <boxGeometry args={[4.2, 0.74, 0.6]} />
+          <meshStandardMaterial color="#2c3f5c" roughness={0.7} />
+        </mesh>
+        <mesh position={[0.2, 0.55, -2.9]}>
+          <boxGeometry args={[0.9, 1.1, 0.6]} />
+          <meshStandardMaterial color="#a02330" roughness={0.55} metalness={0.2} />
+        </mesh>
+
+        {/* Two lit windows high in the right-hand pier, over the forecourt. */}
+        {[4.0, 5.3].map((x) => (
+          <mesh key={x} position={[x, 2.3, SIDE.d / 2 + 0.16]}>
+            <planeGeometry args={[0.9, 0.9]} />
             <meshBasicMaterial color="#ffd9a0" />
           </mesh>
         ))}
@@ -293,38 +435,79 @@ export function Exterior({ mobile }: Props) {
         </group>
       ))}
 
-      {/* The totem sign by the road. */}
+      {/* The totem sign by the road: the artwork on the two faces only, the edges left
+          as the white board they are, and lit from within as forecourt signs are. */}
       <group position={[-7.5, 0, Z + 9]}>
-        <mesh position={[0, 2.6, 0]}>
-          <boxGeometry args={[1.1, 4.2, 0.25]} />
-          <meshStandardMaterial map={tex.totem} roughness={0.6} />
+        <mesh position={[0, 2.7, 0]}>
+          <boxGeometry args={[1.34, 4.4, 0.22]} />
+          {[0, 1].map((i) => (
+            <meshStandardMaterial key={i} attach={`material-${i}`} color="#e9e7e0" roughness={0.7} />
+          ))}
+          {[2, 3].map((i) => (
+            <meshStandardMaterial key={i} attach={`material-${i}`} color="#d7d4cc" roughness={0.75} />
+          ))}
+          {[4, 5].map((i) => (
+            <meshStandardMaterial
+              key={i}
+              attach={`material-${i}`}
+              map={tex.totem}
+              emissiveMap={tex.totem}
+              emissive="#ffffff"
+              emissiveIntensity={i === 4 ? 0.4 : 0.24}
+              roughness={0.55}
+            />
+          ))}
         </mesh>
-        <mesh position={[0, 0.25, 0]}>
-          <boxGeometry args={[0.3, 0.5, 0.3]} />
-          <meshStandardMaterial color="#555" roughness={0.8} />
+        {/* The plinth it stands on. */}
+        <mesh position={[0, 0.28, 0]}>
+          <boxGeometry args={[1.1, 0.56, 0.42]} />
+          <meshStandardMaterial color="#5b5d62" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 0.58, 0]}>
+          <boxGeometry args={[1.18, 0.08, 0.5]} />
+          <meshStandardMaterial color="#6d6f74" roughness={0.85} />
         </mesh>
       </group>
 
       {/* The stone house joined on to the left of the garage, its windows lit. */}
       <group position={[-11.2, 0, Z - 1.2]}>
-        <mesh position={[0, 3.4, 0]}>
-          <boxGeometry args={[9, 6.8, 8.5]} />
+        <mesh position={[0, HOUSE.h / 2, 0]}>
+          <boxGeometry args={[HOUSE.w, HOUSE.h, HOUSE.d]} />
           <meshStandardMaterial map={tex.house} roughness={1} />
         </mesh>
-        <mesh position={[0, 6.8 + 1.15, 0]} rotation={[0, 0, 0]}>
-          <boxGeometry args={[9.4, 0.14, 4.6]} />
-          <meshStandardMaterial color="#23272e" roughness={0.75} />
-        </mesh>
-        {[-1, 1].map((sx) => (
-          <mesh key={sx} position={[0, 6.8 + 1.15, sx * 2.6]} rotation={[sx * 0.62, 0, 0]}>
-            <boxGeometry args={[9.4, 0.14, 4.6]} />
+        {/* A slated roof: a slope each side reaching the eaves, a ridge along the top and
+            a stone gable closing each end. */}
+        {[-1, 1].map((sz) => (
+          <mesh key={sz} position={[0, (HOUSE.h + HOUSE.ridge) / 2, (sz * HOUSE.d) / 4]} rotation={[sz * HOUSE_PITCH, 0, 0]}>
+            <boxGeometry args={[HOUSE.w + 0.5, 0.16, HOUSE_SLOPE + 0.4]} />
             <meshStandardMaterial color="#23272e" roughness={0.75} />
           </mesh>
         ))}
-        <mesh position={[-3.2, 9.2, 0]}>
-          <boxGeometry args={[0.8, 1.6, 0.8]} />
+        <mesh position={[0, HOUSE.ridge, 0]}>
+          <boxGeometry args={[HOUSE.w + 0.6, 0.18, 0.36]} />
+          <meshStandardMaterial color="#2c3038" roughness={0.8} />
+        </mesh>
+        {[-1, 1].map((sx) => (
+          <mesh key={sx} position={[(sx * HOUSE.w) / 2, 0, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
+            <shapeGeometry args={[houseGable]} />
+            <meshStandardMaterial map={tex.house} roughness={1} side={2} />
+          </mesh>
+        ))}
+        {/* The chimney, seated on the ridge with its pots. */}
+        <mesh position={[-3.2, HOUSE.ridge + 0.55, 0]}>
+          <boxGeometry args={[0.9, 1.9, 0.9]} />
           <meshStandardMaterial map={tex.house} roughness={1} />
         </mesh>
+        <mesh position={[-3.2, HOUSE.ridge + 1.6, 0]}>
+          <boxGeometry args={[1.02, 0.16, 1.02]} />
+          <meshStandardMaterial color="#4a453e" roughness={0.95} />
+        </mesh>
+        {[-0.22, 0.22].map((o) => (
+          <mesh key={o} position={[-3.2 + o, HOUSE.ridge + 1.88, 0]}>
+            <cylinderGeometry args={[0.14, 0.16, 0.42, 8]} />
+            <meshStandardMaterial color="#6b4b3a" roughness={1} />
+          </mesh>
+        ))}
         {[
           [-2.6, 1.5, true],
           [0.4, 1.5, false],

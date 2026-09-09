@@ -56,6 +56,7 @@ export function Bay({ mobile }: Props) {
     door: 0,
     headlights: 0,
     dull: 1,
+    grime: 1,
     correctSweep: 0,
     foam: 0,
     washSweep: 0,
@@ -316,7 +317,7 @@ export function Bay({ mobile }: Props) {
           <group ref={car} position={[0, 0, DRIVE_FROM_Z]}>
             <mesh position={[0, 0.55, 0]}>
               <boxGeometry args={[CAR.width, 0.6, CAR.length]} />
-              <meshPhysicalMaterial color="#132264" roughness={0.35} metalness={0.6} clearcoat={0.6} />
+              <meshPhysicalMaterial color="#1b2f86" roughness={0.35} metalness={0.6} clearcoat={0.6} />
             </mesh>
           </group>
         }

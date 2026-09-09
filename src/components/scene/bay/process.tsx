@@ -63,8 +63,11 @@ export function Process({ act, car, mobile }: Props) {
     polisher.current.on = 0;
     cloth.current.on = 0;
     spinning.current = 0;
-    cf.dull = a < 4 ? 1 : a === 4 ? 1 : 0;
+    // The finish stays tired until the polisher; the filth comes off in the wash, well
+    // before it, so act 1 reads as a wash rather than as nothing much happening.
+    cf.dull = a <= 4 ? 1 : 0;
     cf.correctSweep = a === 4 ? unlerp(0.1, 0.9, d) : a > 4 ? 1 : 0;
+    cf.grime = a <= 1 ? 1 : 0;
     cf.foam = 0;
     cf.washSweep = 0;
     cf.haze = 0;

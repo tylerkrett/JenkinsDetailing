@@ -7,10 +7,10 @@ import { Box3, Color, type Group, type Material, Mesh, MeshPhysicalMaterial, Mes
 
 import { carModelUrl } from "~/lib/scene/assets";
 import { BAY } from "~/lib/scene/bay-layout";
-import { patchChassis, patchPaint, patchShell, sweepUniforms, tickShell } from "~/lib/scene/sweep";
+import { carSpace, patchChassis, patchPaint, patchShell, sweepUniforms, tickShell } from "~/lib/scene/sweep";
 
 /** The hero paint: a deep metallic blue near the accent, clearcoated. */
-const PAINT = new Color("#132264");
+const PAINT = new Color("#15318f");
 
 export type CarFrame = {
   /** 0..1 how far the car has driven in from the road (act 1). */
@@ -28,6 +28,8 @@ export type CarFrame = {
   headlights: number;
   /** Process state, written by the choreography each frame. */
   dull: number;
+  /** 0..1 how much road film and brake dust is sitting on the paint (acts 1 and 2). */
+  grime: number;
   correctSweep: number;
   foam: number;
   washSweep: number;
@@ -101,15 +103,17 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
     [],
   );
   const uniforms = useMemo(
-    () => ({ paint: sweepUniforms(), chassis: sweepUniforms(), foam: sweepUniforms(), haze: sweepUniforms() }),
+    () => ({ paint: sweepUniforms(), grime: sweepUniforms(), chassis: sweepUniforms(), foam: sweepUniforms(), haze: sweepUniforms() }),
     [],
   );
+  /** Car space for every material on the car; rewritten from the root each frame. */
+  const car = useMemo(carSpace, []);
   useEffect(() => {
-    patchPaint(paint, uniforms.paint);
-    patchChassis(chassis, uniforms.chassis);
-    patchShell(foam, uniforms.foam, "foam");
-    patchShell(haze, uniforms.haze, "haze");
-  }, [paint, chassis, foam, haze, uniforms]);
+    patchPaint(paint, car, uniforms.paint, uniforms.grime);
+    patchChassis(chassis, car, uniforms.chassis);
+    patchShell(foam, car, uniforms.foam, "foam");
+    patchShell(haze, car, uniforms.haze, "haze");
+  }, [paint, chassis, foam, haze, uniforms, car]);
   useEffect(
     () => () => {
       paint.dispose();
@@ -214,6 +218,8 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
     const f = frame.current;
     uniforms.paint.uAmount.value = f.dull;
     uniforms.paint.uSweep.value = f.correctSweep;
+    uniforms.grime.uAmount.value = f.grime;
+    uniforms.grime.uSweep.value = f.washSweep;
     uniforms.chassis.uAmount.value = f.chassisDirt;
     uniforms.chassis.uSweep.value = f.chassisSweep;
     uniforms.foam.uAmount.value = f.foam;
@@ -225,6 +231,10 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
     const drive = driveFromZ * (1 - f.driveIn);
     g.position.set(f.x, f.lift * BAY.liftHeight, drive);
     g.rotation.y = f.yaw;
+    // Car space follows the root, so the dirt and the swirls stay on the panel they are
+    // painted on while the car drives down the street, turns in and goes up on the lift.
+    g.updateMatrixWorld();
+    car.value.copy(g.matrixWorld).invert();
 
     // Wheels roll with the drive-in (angle = distance / radius about the axle, the
     // model's local X), and come off in act 3: each drops to the floor beside the car.

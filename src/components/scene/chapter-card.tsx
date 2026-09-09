@@ -22,7 +22,7 @@ export function ChapterCard({ titles }: Props) {
 
   useEffect(() => {
     let shown = -1;
-    return useScene.subscribe((s) => {
+    const apply = (s: ReturnType<typeof useScene.getState>) => {
       const node = el.current;
       const world = s.world;
       if (!node || !world) return;
@@ -41,7 +41,9 @@ export function ChapterCard({ titles }: Props) {
         if (number.current) number.current.textContent = String(act + 1).padStart(2, "0");
         if (title.current) title.current.textContent = titles[act] ?? "";
       }
-    });
+    };
+    apply(useScene.getState());
+    return useScene.subscribe(apply);
   }, [titles]);
 
   if (!ready) return null;
