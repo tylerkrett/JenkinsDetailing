@@ -25,5 +25,6 @@ export function detectSceneSupport(): SceneSupport {
   } catch {
     webgl2 = false;
   }
-  return { webgl2, reducedMotion, coarsePointer, ok: webgl2 && !reducedMotion };
+  const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+  return { webgl2, reducedMotion, coarsePointer, ok: webgl2 && !reducedMotion && !saveData };
 }

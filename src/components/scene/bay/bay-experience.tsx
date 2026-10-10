@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ProcessStep } from "~/lib/content";
 import { clamp } from "~/lib/motion";
@@ -24,24 +24,25 @@ import { TiltPrompt } from "../tilt-prompt";
 
 type Props = {
   steps: ProcessStep[];
-  /** The static home for search engines, reduced motion and no WebGL. */
+  /** The plain steps, shown under the loading cover until the scene is active. */
   fallback: ReactNode;
   headline: string;
-  /** The rest of the home page, shown after the reveal. */
+  /** What follows the reveal. */
   children: ReactNode;
 };
 
 function hrefFor(step: ProcessStep) {
-  return step.service ? `/services/${step.service}` : `/process#${step.slug}`;
+  return step.service ? `/services/${step.service}` : `/watch?view=plain#${step.slug}`;
 }
 
 /**
- * The bay's DOM. Server-rendered as the static home; once the scene reports it is
- * active this swaps to spacer sections that give the scroll its length, plus caption,
+ * The bay's DOM on the watch page. Renders the plain steps until the scene reports it is
+ * active, then swaps to spacer sections that give the scroll its length, plus caption,
  * index, preloader and keyboard nav.
  */
 export function BayExperience({ steps, fallback, headline, children }: Props) {
   const active = useScene((s) => s.active);
+  const ready = useScene((s) => s.ready);
   const setWorld = useScene((s) => s.setWorld);
   const router = useRouter();
   const [outro, setOutro] = useState(OUTRO_SPAN);
@@ -49,6 +50,16 @@ export function BayExperience({ steps, fallback, headline, children }: Props) {
   const hrefs = useMemo(() => steps.map(hrefFor), [steps]);
   // Which model variant to wait for; decided once the scene is known to be active.
   const loaders = useMemo(() => (active ? bayLoaders(detectSceneSupport().coarsePointer) : []), [active]);
+
+  // A step linked from the home page (?act=3) opens at that act's hold, once, as soon as
+  // the scene is ready. Later layout changes must not pull the visitor back there.
+  const jumped = useRef(false);
+  useEffect(() => {
+    if (!active || !ready || jumped.current) return;
+    jumped.current = true;
+    const act = Number(new URLSearchParams(window.location.search).get("act"));
+    if (Number.isInteger(act) && act >= 1 && act <= steps.length) scrollToProgress(layout.holdProgress(act - 1), 0.01);
+  }, [active, ready, layout, steps.length]);
 
   // The world is published from here, not the canvas, because only the DOM knows how
   // tall the page is. The outro span absorbs everything below the acts so the holds land
@@ -81,7 +92,9 @@ export function BayExperience({ steps, fallback, headline, children }: Props) {
     if (!active) return;
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      // Form fields and dialogs keep their keys, and Enter on a link or button belongs to it.
+      if (t?.closest("input, textarea, select, [contenteditable='true'], [role='dialog']")) return;
+      if (e.key === "Enter" && t?.closest("a, button, [role='button']")) return;
       const { station, stationCount, entering, enterStation } = useScene.getState();
       if (entering) return;
       const go = (i: number) => {

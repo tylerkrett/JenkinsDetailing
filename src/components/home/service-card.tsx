@@ -1,39 +1,57 @@
-import Link from "next/link";
-
 import { Photo } from "~/components/site/photo";
-import type { Service } from "~/lib/content";
+import { MediaCard } from "~/components/ui/media-card";
+import type { ProcessedImage, Service } from "~/lib/content";
 import { fromPrice } from "~/lib/format";
 
-const SIZES = "(min-width: 1024px) 30vw, (min-width: 640px) 45vw, calc(100vw - 3rem)";
+/** Image widths for the grids the card sits in: two across on the home page, three on /services. */
+export const CARD_SIZES = {
+  two: "(min-width: 1280px) 616px, (min-width: 541px) 48vw, calc(100vw - 3rem)",
+  three: "(min-width: 1280px) 392px, (min-width: 1024px) 30vw, (min-width: 541px) 48vw, calc(100vw - 3rem)",
+} as const;
 
-/** One service in a list: photo when there is one, title, the one line, the from price. */
-export function ServiceCard({ service }: { service: Service }) {
+type Props = {
+  service: Service;
+  /** Overrides the service's own photo, so a page never shows the same one twice. */
+  image?: ProcessedImage;
+  sizes?: string;
+  /** Load the photo straight away: for the first cards on screen. */
+  priority?: boolean;
+  /** h3 under a section title; h2 when the cards sit directly under the page's h1. */
+  heading?: "h2" | "h3";
+};
+
+/** One service in a grid: photo, title, the one line and the from price. Cards in a row share a height. */
+export function ServiceCard({
+  service,
+  image = service.image,
+  sizes = CARD_SIZES.three,
+  priority = false,
+  heading: Heading = "h3",
+}: Props) {
   const price = fromPrice(service.fromPriceGBP);
   return (
-    <Link
-      href={`/services/${service.slug}`}
-      className="group hairline flex flex-col gap-4 border-t pt-5 transition-colors duration-200"
-    >
-      {service.image ? (
+    <MediaCard href={`/services/${service.slug}`}>
+      {image ? (
         <div className="overflow-hidden">
           <Photo
-            image={service.image}
+            image={image}
             alt=""
-            sizes={SIZES}
-            className="ease-out-quint aspect-[4/3] transition-transform duration-700 group-hover:scale-[1.03]"
+            sizes={sizes}
+            priority={priority}
+            className="ease-out-quint aspect-[16/10] transition-transform duration-700 group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"
           />
         </div>
       ) : null}
-      <div className="flex flex-col gap-2">
-        <h3 className="font-display text-display-md group-hover:text-accent-lit font-bold tracking-tight transition-colors">
+      <div className="flex flex-1 flex-col gap-3 p-6">
+        <Heading className="font-display group-hover:text-accent-lit text-2xl font-bold tracking-tight transition-colors">
           {service.title}
-        </h3>
+        </Heading>
         <p className="text-bone/70">{service.promise}</p>
-        <p className="text-bone/50 text-sm">
+        <p className="text-bone/60 mt-auto pt-4 text-sm">
           {price ?? "Priced on inspection"}
           {service.mobile ? " · At the unit or at your door" : ""}
         </p>
       </div>
-    </Link>
+    </MediaCard>
   );
 }

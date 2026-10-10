@@ -1,17 +1,26 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
-import { resetScroll } from "~/components/scene/scroll-driver";
+import { resetScroll } from "~/lib/scene/lenis";
+
+/** Set once the first page has hydrated; only later navigations fade in. */
+let hydrated = false;
 
 /**
  * Re-mounts on every navigation so the incoming page runs its arrival animation. The
- * persistent canvas underneath does the real transition (a camera move); the DOM only
- * has to arrive. Under reduced motion the global rule collapses this to a plain cut.
+ * first page of a visit paints straight away: fading it in from nothing would only delay
+ * the hero, and browsers do not count content first painted invisible as its largest
+ * paint. Under reduced motion the global rule collapses the fade to a plain cut. It must
+ * stay free of scene imports: it wraps every page, and only /watch may load three.
  */
 export default function Template({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [arrive] = useState(() => hydrated);
+  useEffect(() => {
+    hydrated = true;
+  }, []);
   // Every navigation starts at the top, whatever the smooth-scroll state was before.
   useEffect(() => {
     // The site manages its own scroll; a reload must not reopen halfway down the corridor.
@@ -19,7 +28,7 @@ export default function Template({ children }: { children: React.ReactNode }) {
     if (!window.location.hash) resetScroll();
   }, [pathname]);
   return (
-    <div key={pathname} className="page-arrive">
+    <div key={pathname} className={arrive ? "page-arrive" : undefined}>
       {children}
     </div>
   );

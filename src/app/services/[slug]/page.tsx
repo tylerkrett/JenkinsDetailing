@@ -85,7 +85,7 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
               </h2>
               <div className="mt-6 grid gap-8 sm:grid-cols-2">
                 {packages.map((p) => (
-                  <div key={p.slug} className="hairline border-t pt-5">
+                  <div key={p.slug} className="bg-ink-2 rounded-md p-6">
                     <h3 className="font-display text-xl font-bold">{p.name}</h3>
                     <p className="text-bone/70 mt-2">{p.summary}</p>
                     <p className="text-bone/50 mt-2 text-sm">
@@ -114,7 +114,7 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
               <ul className="mt-6 flex flex-col gap-4">
                 {related.map((st) => (
                   <li key={st.slug} className="hairline border-t pt-4">
-                    <p className="font-display text-accent text-sm font-bold tabular-nums">
+                    <p className="font-display text-accent-lit text-sm font-bold tabular-nums">
                       {String(st.act).padStart(2, "0")}
                     </p>
                     <p className="mt-1 font-semibold">{st.title}</p>
@@ -122,15 +122,30 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
                   </li>
                 ))}
               </ul>
-              <Link href="/process" className="text-accent-lit mt-4 inline-block underline-offset-[6px] hover:underline">
+              <Link href="/watch" className="text-accent-lit mt-4 inline-block underline-offset-[6px] hover:underline">
                 The whole process
               </Link>
+            </section>
+          ) : null}
+          {service.faq.length > 0 ? (
+            <section aria-labelledby="faq" className="mt-16">
+              <h2 id="faq" className="font-display text-display-md font-bold tracking-tight">
+                Good to know
+              </h2>
+              <dl className="mt-6 flex flex-col">
+                {service.faq.map((item) => (
+                  <div key={item.question} className="hairline border-t py-6">
+                    <dt className="font-semibold">{item.question}</dt>
+                    <dd className="text-bone/75 mt-3 max-w-[62ch]">{item.answer}</dd>
+                  </div>
+                ))}
+              </dl>
             </section>
           ) : null}
         </article>
 
         <aside className="mt-14 lg:sticky lg:top-28 lg:col-span-4 lg:col-start-9 lg:mt-0 lg:self-start">
-          <div className="hairline border-t pt-5">
+          <div className="bg-ink-2 rounded-md p-6 lg:p-8">
             <p className="font-display text-display-md font-bold">{price ?? "Priced on inspection"}</p>
             {service.priceNote ? <p className="text-bone/70 mt-2 text-sm">{service.priceNote}</p> : null}
             {service.includes.length > 0 ? (
@@ -162,6 +177,7 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
               </div>
             </dl>
             <QuoteActions services={services} settings={settings} service={service} className="mt-8" />
+            <p className="text-bone/60 mt-5 text-sm">{settings.replyPromise}</p>
           </div>
         </aside>
       </div>

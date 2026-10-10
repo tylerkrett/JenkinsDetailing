@@ -3,7 +3,6 @@ import "~/styles/globals.css";
 import { type Metadata, type Viewport } from "next";
 import { Archivo, Figtree } from "next/font/google";
 
-import { SceneLoader } from "~/components/scene/scene-loader";
 import { SiteFooter } from "~/components/site/footer";
 import { SiteHeader } from "~/components/site/header";
 import { JsonLd } from "~/components/site/json-ld";
@@ -79,7 +78,6 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         </a>
         <JsonLd data={graph(websiteJsonLd(), businessJsonLd(settings, reviews))} />
         <TRPCReactProvider>
-          <SceneLoader />
           <div className="relative z-10">
             <SiteHeader />
             {children}

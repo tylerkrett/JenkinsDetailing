@@ -21,8 +21,8 @@ export async function SiteFooter() {
   ].filter(Boolean);
 
   return (
-    <footer className="bg-ink relative z-10 pt-32">
-      <div className="hairline mx-auto grid max-w-7xl gap-10 border-t px-6 pt-12 pb-8 sm:grid-cols-2 lg:grid-cols-12">
+    <footer className="bg-ink-2 hairline relative z-10 border-t">
+      <div className="site-container grid gap-10 pt-16 pb-10 sm:grid-cols-2 lg:grid-cols-12">
         <div className="flex flex-col items-start gap-5 lg:col-span-4">
           <Wordmark />
           {s.carproApproved ? <p className="text-bone/60 text-sm">CarPro approved detailing centre</p> : null}
@@ -50,8 +50,8 @@ export async function SiteFooter() {
           </div>
         </div>
         <div className="lg:col-span-3">
-          <h2 className="font-display text-bone/50 text-sm font-semibold">Services</h2>
-          <ul className="mt-3 flex flex-col gap-2 text-sm">
+          <h2 className="footer-heading">Services</h2>
+          <ul className="mt-4 flex flex-col gap-2.5 text-sm">
             {services.map((svc) => (
               <li key={svc.slug}>
                 <Link href={`/services/${svc.slug}`} className="text-bone/80 hover:text-bone transition-colors">
@@ -62,8 +62,8 @@ export async function SiteFooter() {
           </ul>
         </div>
         <div className="lg:col-span-2">
-          <h2 className="font-display text-bone/50 text-sm font-semibold">Pages</h2>
-          <ul className="mt-3 flex flex-col gap-2 text-sm">
+          <h2 className="footer-heading">Pages</h2>
+          <ul className="mt-4 flex flex-col gap-2.5 text-sm">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className="text-bone/80 hover:text-bone transition-colors">
@@ -79,8 +79,8 @@ export async function SiteFooter() {
           </ul>
         </div>
         <div className="lg:col-span-3">
-          <h2 className="font-display text-bone/50 text-sm font-semibold">Hours</h2>
-          <p className="text-bone/80 mt-3 text-sm">
+          <h2 className="footer-heading">Hours</h2>
+          <p className="text-bone/80 mt-4 text-sm">
             {lines(s.hoursText).map((l, i) => (
               <span key={i}>
                 {i > 0 ? <br /> : null}
@@ -106,8 +106,8 @@ export async function SiteFooter() {
           ) : null}
         </div>
       </div>
-      <div className="mx-auto max-w-7xl px-6">
-        <div className="hairline text-bone/50 flex flex-col gap-3 border-t py-6 text-xs sm:flex-row sm:items-center sm:justify-between">
+      <div className="site-container">
+        <div className="hairline text-bone/60 flex flex-col gap-3 border-t py-6 text-xs sm:flex-row sm:items-center sm:justify-between">
           <p>
             {legal.join(". ")}
             {legal.length ? ". " : ""}

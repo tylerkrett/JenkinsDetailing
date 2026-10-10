@@ -1,5 +1,6 @@
 {
   "home": {
+    "heroImage": "about/danny-foam.jpg",
     "title": "Car detailing, paint correction and ceramic coating in Tregaron",
     "description": "Jenkins Detailing, a CarPro approved detailing centre in Tregaron, Mid Wales. Paint correction, ceramic protection, undersealing and full detailing, at the unit or at your door.",
     "intro": "",
@@ -36,7 +37,7 @@
     "title": "Privacy",
     "description": "How Jenkins Detailing handles the personal data you send through this site.",
     "intro": "",
-    "body": "This site collects only what you send through the quote form or by email: your name, contact details, the vehicle and your message. We use it to reply to you and to carry out the work you ask for. We do not sell it or share it with anyone except the services that deliver our email.\n\nThe site sets no tracking cookies. Traffic is measured with Cloudflare Web Analytics, which does not use cookies or identify individuals.\n\nYou can ask what we hold about you, or ask us to delete it, by emailing us. We keep quote requests for twelve months unless you become a customer, in which case we keep the job record for our accounts."
+    "body": "This site collects only what you send through the quote form or by email: your name, contact details, the vehicle and your message. We use it to reply to you and to carry out the work you ask for. We do not sell it or share it with anyone except the services that deliver our email.\n\nThe site sets no tracking cookies. If you choose the 3D or Plain view, a preference cookie called jd-view remembers that choice for one year. Traffic is measured with Cloudflare Web Analytics, which does not use cookies or identify individuals.\n\nYou can ask what we hold about you, or ask us to delete it, by emailing us. We keep quote requests for twelve months unless you become a customer, in which case we keep the job record for our accounts."
   },
   "terms": {
     "title": "Terms",

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { ServiceCard } from "~/components/home/service-card";
 import { JsonLd } from "~/components/site/json-ld";
+import { Eyebrow } from "~/components/ui/section-header";
 import { getPages, getServices } from "~/lib/content";
 import { OG, WEBSITE_ID, absolute, graph, itemList, ogImage, pageMetadata, serviceEntity } from "~/lib/seo";
 
@@ -29,17 +30,18 @@ export default async function ServicesPage() {
   });
 
   return (
-    <main id="main" className="mx-auto max-w-7xl px-6 pt-32 pb-16">
+    <main id="main" className="site-container pt-32 pb-24">
       <JsonLd data={structured} />
       <div className="lg:grid lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-7">
-          <h1 className="font-display text-display-lg font-bold tracking-tight">{copy.title}</h1>
+          <Eyebrow>What we do</Eyebrow>
+          <h1 className="font-display text-display-lg mt-4 font-bold tracking-tight">{copy.title}</h1>
           {copy.intro ? <p className="text-bone/80 mt-6 max-w-[60ch]">{copy.intro}</p> : null}
         </div>
       </div>
-      <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-        {services.map((s) => (
-          <ServiceCard key={s.slug} service={s} />
+      <div className="service-grid service-grid-wide mt-14">
+        {services.map((s, i) => (
+          <ServiceCard key={s.slug} service={s} heading="h2" priority={i === 0} />
         ))}
       </div>
     </main>

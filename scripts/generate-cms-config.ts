@@ -84,6 +84,18 @@ const settingsPresentation: Record<keyof z.infer<typeof settingsSchema>, Present
   registeredOffice: { label: "Registered office", hint: "One line. Shown in the footer." },
   vatNumber: { label: "VAT number", hint: "Optional." },
   tagline: { label: "Tagline", hint: "One short line, used on the About page and in share cards." },
+  replyPromise: {
+    label: "Reply promise",
+    hint: "How soon people hear back, shown beside the quote form and buttons. Only promise what you can keep.",
+  },
+  stats: {
+    label: "Facts under the home photo",
+    hint:
+      "e.g. value `4,000 kg`, label `Dedicated underbody lift`. The strip shows four facts: the CarPro approval, " +
+      "the year and the Google rating come first, then these. Numbers count up as the strip scrolls into view.",
+    itemLabel: "Fact",
+    fields: { label: { label: "Label" }, value: { label: "Value" } },
+  },
   promise: { label: "Promise", hint: "The one line at the top of the home page." },
   addressLine: { label: "Address line", hint: "e.g. `Rose Garage, Dewi Road`." },
   town: { label: "Town" },
@@ -106,8 +118,12 @@ const settingsPresentation: Record<keyof z.infer<typeof settingsSchema>, Present
   carproApproved: { label: "CarPro approved detailing centre", hint: "Shows the CarPro mark when ticked." },
   googleRating: { label: "Google rating", hint: "e.g. `4.8`. Leave empty to hide the rating.", extra: { step: 0.1 } },
   googleReviewCount: { label: "Google review count", hint: "The number of reviews the rating is based on." },
-  portrait: { label: "Portrait photo", hint: "Danny, for the About page.", extra: PHOTO },
-  unitPhoto: { label: "Unit photo", hint: "The bay or the forecourt, for the contact page.", extra: PHOTO },
+  portrait: {
+    label: "Portrait photo",
+    hint: "Danny, for the About and contact pages, and the home page when it has no hero photo.",
+    extra: PHOTO,
+  },
+  unitPhoto: { label: "Unit photo", hint: "The bay or the forecourt, beside the story on the home page.", extra: PHOTO },
   socials: {
     label: "Social links",
     hint: "Full web addresses. Leave any of them empty to hide it.",
@@ -123,12 +139,22 @@ const servicePresentation: Record<keyof z.infer<typeof serviceInputSchema>, Pres
   fromPriceGBP: { label: "From price (£)", hint: "Whole pounds. Leave empty when a price needs an inspection first.", extra: { step: 1 } },
   priceNote: { label: "Price note", widget: "text", hint: "e.g. `Priced on inspection` or the full price list for the service." },
   includes: { label: "What is included", itemLabel: "Item", hint: "One item per line." },
+  faq: {
+    label: "Questions and answers",
+    hint: "What customers ask about this service, answered on its page.",
+    itemLabel: "Question",
+    fields: { question: { label: "Question" }, answer: { label: "Answer", widget: "text" } },
+  },
   duration: { label: "How long it takes", hint: "e.g. `One to three days`." },
   guarantee: { label: "Guarantee", hint: "Optional." },
   mobile: { label: "Available at the customer's door" },
-  image: { label: "Main photo", hint: "Optional. Shown on the service page and in its share card.", extra: PHOTO },
+  image: {
+    label: "Main photo",
+    hint: "Shown on the service page, its card and its share card. Without one, a still from the 3D bay is used.",
+    extra: PHOTO,
+  },
   gallery: { label: "More photos", itemLabel: "Photo", extra: PHOTO },
-  featured: { label: "Featured", hint: "Featured services appear on the home page." },
+  featured: { label: "Featured", hint: "The first four featured services appear on the home page." },
   published: { label: "Show on the site", hint: "Untick to keep a draft." },
   sortOrder: { label: "Position", hint: "Lower numbers come first. Use tens (10, 20, 30) so you can slot one in later.", extra: { step: 1 } },
 };
@@ -151,9 +177,22 @@ const processPresentation: Record<keyof z.infer<typeof processStepInputSchema>, 
   act: { label: "Act", hint: "Which stop of the 3D scene this step narrates, 1 to 7, in order.", extra: { step: 1 } },
   what: { label: "What is done", hint: "One line, shown in the scene." },
   why: { label: "Why it is done", hint: "One line, in your own words, shown in the scene under the what." },
-  text: { label: "Longer text", widget: "text", hint: "For the process page. Blank lines separate paragraphs." },
+  text: {
+    label: "Longer text",
+    widget: "text",
+    hint: "For the plain view of the watch page. Blank lines separate paragraphs.",
+  },
   service: { label: "Links to service", hint: "The web address of the service this step belongs to, e.g. `detailing`." },
-  image: { label: "Photo", hint: "A real photo of this step. Optional.", extra: PHOTO },
+  image: {
+    label: "Photo",
+    hint: "A real photo of this step, for the plain view of the watch page. Optional; the scene still stands in.",
+    extra: PHOTO,
+  },
+  still: {
+    label: "Scene still",
+    hint: "The picture on this step's tile on the home page. Leave empty to use the still captured from the 3D bay.",
+    extra: PHOTO,
+  },
   sortOrder: { label: "Position", extra: { step: 1 } },
 };
 
@@ -190,12 +229,23 @@ const pagesPresentation: Record<keyof z.infer<typeof pagesSchema>, Presentation>
   home: {
     label: "Home",
     fields: pageCopyFields({
-      headline: { label: "Headline", hint: "The big line over the scene." },
+      headline: { label: "Headline", hint: "The big line over the hero photo." },
+      heroImage: {
+        label: "Hero photo",
+        hint: "A wide photo behind the headline, at least 2000 px across. Leave empty to use the portrait photo.",
+        extra: PHOTO,
+      },
+      heroVideo: {
+        label: "Hero video",
+        hint:
+          "Optional. A short muted loop over the hero photo, e.g. `/videos/reveal.mp4`; the file has to be added " +
+          "to the site by a developer. It never plays for people who ask for less motion or save data.",
+      },
       subline: { label: "Subline", hint: "One line under the headline." },
     }),
   },
   services: { label: "Services page", fields: pageCopyFields() },
-  process: { label: "Process page", fields: pageCopyFields() },
+  process: { label: "Watch page (how we do it)", fields: pageCopyFields() },
   work: { label: "Work page", fields: pageCopyFields() },
   about: { label: "About page", fields: pageCopyFields({ story: { label: "Story", widget: "text", hint: "Blank lines separate paragraphs." } }) },
   contact: { label: "Contact page", fields: pageCopyFields() },
@@ -365,16 +415,21 @@ function buildField(
   } else if (base instanceof z.ZodArray) {
     const element = (base._def as { type: z.ZodTypeAny }).type;
     const image = isImageFile(element);
-    if (!image && !(unwrap(element).base instanceof z.ZodString))
+    const item = unwrap(element).base;
+    if (!image && !(item instanceof z.ZodString) && !(item instanceof z.ZodObject))
       throw new Error(`unsupported array element for "${name}"`);
     field.widget = "list";
     field.label_singular = p.itemLabel ?? p.label.replace(/s$/, "");
-    field.field = {
-      name: image ? "file" : "item",
-      label: p.itemLabel ?? p.label.replace(/s$/, ""),
-      widget: image ? "image" : "string",
-      ...extra,
-    };
+    if (item instanceof z.ZodObject) {
+      if (!p.fields) throw new Error(`"${name}" needs nested fields`);
+      field.fields = buildFields(item as z.ZodObject<z.ZodRawShape>, p.fields);
+    } else
+      field.field = {
+        name: image ? "file" : "item",
+        label: p.itemLabel ?? p.label.replace(/s$/, ""),
+        widget: image ? "image" : "string",
+        ...extra,
+      };
     extra = {};
   } else if (base instanceof z.ZodObject) {
     if (!p.fields)

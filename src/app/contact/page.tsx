@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 
 import { QuoteForm } from "~/components/quote/quote-form";
 import { JsonLd } from "~/components/site/json-ld";
+import { Photo } from "~/components/site/photo";
+import { Eyebrow } from "~/components/ui/section-header";
 import { getPages, getService, getServices, getSettings } from "~/lib/content";
 import { lines, telHref, whatsappHref } from "~/lib/format";
 import { BUSINESS_ID, OG, WEBSITE_ID, absolute, graph, ogImage, pageMetadata } from "~/lib/seo";
@@ -45,9 +47,11 @@ export default async function ContactPage({ searchParams }: Props) {
       <JsonLd data={structured} />
       <div className="lg:grid lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-7">
-          <h1 className="font-display text-display-lg font-bold tracking-tight">{contact.title}</h1>
+          <Eyebrow>Prices and dates</Eyebrow>
+          <h1 className="font-display text-display-lg mt-4 font-bold tracking-tight">{contact.title}</h1>
           {contact.intro ? <p className="text-bone/80 mt-6 max-w-[56ch]">{contact.intro}</p> : null}
-          <div className="mt-12 max-w-xl">
+          <div className="bg-ink-2 mt-10 max-w-xl rounded-md p-6 sm:p-8">
+            <p className="text-accent-lit mb-8 text-sm">{settings.replyPromise}</p>
             {service ? <p className="text-bone/70 mb-6">This request is about {service.title.toLowerCase()}.</p> : null}
             <QuoteForm
               key={service?.slug ?? "general"}
@@ -58,6 +62,14 @@ export default async function ContactPage({ searchParams }: Props) {
           </div>
         </div>
         <aside className="mt-16 lg:col-span-4 lg:col-start-9 lg:mt-0">
+          {settings.portrait ? (
+            <Photo
+              image={settings.portrait}
+              alt="Danny snow-foaming a car in the Jenkins Detailing bay"
+              sizes="(min-width: 1280px) 400px, (min-width: 1024px) 31vw, calc(100vw - 3rem)"
+              className="mb-8 aspect-[4/3] rounded-md"
+            />
+          ) : null}
           <div className="hairline border-t pt-5">
             <p className="font-display text-display-md font-bold">
               <a href={telHref(settings.phoneDigits)} className="tabular-nums">

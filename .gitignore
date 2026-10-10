@@ -17,6 +17,9 @@ db.sqlite
 # next.js
 /.next/
 /.next-dev/
+/.next-redesign/
+/.next-production/
+/.next-build/
 /out/
 next-env.d.ts
 

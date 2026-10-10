@@ -1,12 +1,14 @@
-@import "tailwindcss";
+@import "tailwindcss" source("../");
 
 @theme {
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-archivo), var(--font-figtree), ui-sans-serif, sans-serif;
 
-  /* The whole site runs on five colours. Jenkins blue is the only accent. */
+  /* Three surfaces (ink base, raised ink-2 panels, warm photo-surface), bone text and
+     Jenkins blue. Blue is the only accent. */
   --color-ink: #06080f;
   --color-ink-2: #0c111c;
+  --color-photo-surface: #101216;
   --color-bone: #eef1f6;
   --color-accent: #2247d6;
   --color-accent-lit: #8fa6ff;
@@ -20,6 +22,9 @@
   --text-display-md--line-height: 1.1;
   --text-body: 1.0625rem;
   --text-body--line-height: 1.6;
+  /* Section labels: small, tracked, blue */
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1.5;
 
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-cubic: cubic-bezier(0.32, 0, 0.67, 0);
@@ -138,4 +143,528 @@
 /* Once JavaScript has confirmed the scene will run, the cover waits for it however long it takes. */
 @utility load-cover-hold {
   animation: none !important;
+}
+
+/* Shared pieces of the photo-led site. Layout utilities stay in the markup. */
+@layer components {
+  .site-container {
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+  .section-space {
+    padding-block: clamp(64px, 8vw, 112px);
+  }
+  .eyebrow {
+    font-size: var(--text-eyebrow);
+    line-height: var(--text-eyebrow--line-height);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--color-accent-lit);
+  }
+  .footer-heading {
+    font-size: var(--text-eyebrow);
+    line-height: var(--text-eyebrow--line-height);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-bone) 55%, transparent);
+  }
+  .section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .section-heading h2 {
+    max-width: 820px;
+  }
+  .text-link {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    color: var(--color-bone);
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, var(--color-bone) 30%, transparent);
+    text-underline-offset: 7px;
+    transition:
+      color 200ms,
+      text-decoration-color 200ms;
+  }
+  .text-link:hover {
+    color: var(--color-accent-lit);
+    text-decoration-color: var(--color-accent-lit);
+  }
+
+  /* Buttons: 48 px tall, 6 px radius. Blue primary with a faint top highlight, bone outline secondary. */
+  .button-primary,
+  .button-outline {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    transition:
+      transform 200ms var(--ease-out-quint),
+      background-color 200ms,
+      border-color 200ms;
+  }
+  .button-primary {
+    background: var(--color-accent);
+    color: white;
+    box-shadow: inset 0 1px 0 #ffffff26;
+  }
+  .button-primary:hover {
+    background: #2f55e5;
+  }
+  .button-outline {
+    border: 1px solid color-mix(in oklab, var(--color-bone) 30%, transparent);
+    color: var(--color-bone);
+  }
+  .button-outline:hover {
+    border-color: color-mix(in oklab, var(--color-bone) 55%, transparent);
+    background: color-mix(in oklab, var(--color-bone) 5%, transparent);
+  }
+  .button-primary:active,
+  .button-outline:active {
+    transform: translateY(1px);
+  }
+  .button-primary:disabled,
+  .button-outline:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Header: a soft gradient over the hero, frosted ink once the page has scrolled 80 px. */
+  .header-surface {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(#06080fd9, #06080f00);
+    transition: background-color 300ms;
+  }
+  .header-surface.is-scrolled {
+    background: #06080fe6;
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid color-mix(in oklab, var(--color-bone) 9%, transparent);
+  }
+
+  /* Home hero */
+  .home-hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    min-height: min(860px, 94svh);
+    padding-block: 150px 90px;
+    overflow: hidden;
+  }
+  .hero-image,
+  .hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 70% center;
+  }
+  .hero-image {
+    z-index: -3;
+  }
+  .hero-video {
+    z-index: -2;
+  }
+  .hero-shade {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(90deg, #06080ff0 0%, #06080fbb 42%, #06080f30 80%),
+      linear-gradient(0deg, #06080fe6, transparent 35%);
+  }
+  .hero-title {
+    max-width: 900px;
+    margin-top: 24px;
+    font-size: clamp(2.625rem, 5.5vw, 4.875rem);
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+  }
+  .hero-intro {
+    max-width: 470px;
+    margin-top: 24px;
+    font-size: 18px;
+    color: color-mix(in oklab, var(--color-bone) 78%, transparent);
+  }
+  .hero-watch {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 32px;
+    font-size: 15px;
+  }
+  .hero-watch:hover {
+    color: var(--color-accent-lit);
+  }
+  .play-glyph {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid color-mix(in oklab, var(--color-bone) 30%, transparent);
+    border-radius: 50%;
+  }
+  .hero-caption {
+    position: absolute;
+    right: 32px;
+    bottom: 25px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: color-mix(in oklab, var(--color-bone) 65%, transparent);
+  }
+
+  /* Proof strip */
+  .proof-strip {
+    background: var(--color-ink-2);
+    border-block: 1px solid color-mix(in oklab, var(--color-bone) 9%, transparent);
+  }
+  .proof-strip dl > div {
+    padding: 30px 24px;
+    border-right: 1px solid color-mix(in oklab, var(--color-bone) 9%, transparent);
+  }
+  .proof-strip dl > div:first-child {
+    padding-left: 0;
+  }
+  .proof-strip dl > div:last-child {
+    border-right: 0;
+  }
+  .proof-strip dt {
+    font-size: 13px;
+    color: color-mix(in oklab, var(--color-bone) 65%, transparent);
+  }
+  .proof-strip dd {
+    margin-top: 8px;
+    font-family: var(--font-display);
+    font-stretch: 112%;
+    font-weight: 700;
+    font-size: clamp(20px, 2vw, 28px);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Cards */
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px;
+    margin-top: 40px;
+  }
+  .media-card {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--color-ink-2);
+    transition: transform 250ms var(--ease-out-quint);
+  }
+  .media-card:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Process stepper */
+  .process-section {
+    background: var(--color-ink-2);
+    overflow: hidden;
+  }
+  .act-stepper {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 260px;
+    gap: 24px;
+    margin-top: 16px;
+    padding-block: 32px 24px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-color: var(--color-accent) var(--color-ink);
+  }
+  .act-stepper li {
+    scroll-snap-align: start;
+  }
+  .act-tile {
+    display: block;
+    padding-top: 16px;
+    border-top: 1px solid color-mix(in oklab, var(--color-bone) 15%, transparent);
+  }
+
+  /* The finish, shown on the home page until before and after pairs are published */
+  .finish-feature {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    align-items: center;
+    margin-top: 40px;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--color-photo-surface);
+  }
+  .finish-copy {
+    padding: 40px;
+  }
+  .story-section {
+    background: var(--color-photo-surface);
+  }
+
+  /* Before and after slider */
+  .comparison {
+    position: relative;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    border-radius: 6px;
+  }
+  .comparison-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .comparison-before {
+    position: absolute;
+    inset: 0;
+  }
+  .comparison-label {
+    position: absolute;
+    top: 16px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    background: #06080fd9;
+    font-size: 13px;
+  }
+  .comparison-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: white;
+    pointer-events: none;
+  }
+  .comparison-line span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-bone);
+    color: var(--color-ink);
+    transform: translate(-50%, -50%);
+  }
+  .comparison-range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: ew-resize;
+    touch-action: pan-y;
+  }
+  .comparison:focus-within {
+    outline: 2px solid var(--color-accent-lit);
+    outline-offset: 3px;
+  }
+
+  /* Map tile */
+  .map-tile {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    padding: 32px;
+    border: 1px solid color-mix(in oklab, var(--color-bone) 9%, transparent);
+    border-radius: 6px;
+    background: var(--color-ink-2);
+    transition: border-color 200ms;
+  }
+  .map-tile:hover {
+    border-color: color-mix(in oklab, var(--color-accent-lit) 60%, transparent);
+  }
+  .map-roads {
+    position: relative;
+    height: 115px;
+    margin: -32px -32px 24px;
+    background:
+      linear-gradient(25deg, transparent 42%, #eef1f615 43%, #eef1f615 45%, transparent 46%),
+      linear-gradient(105deg, transparent 42%, #eef1f612 43%, #eef1f612 45%, transparent 46%);
+  }
+  .map-pin {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--color-accent);
+    color: white;
+    font-weight: 800;
+    transform: rotate(-15deg);
+  }
+
+  /* Watch page: the 3D | Plain bar under the header */
+  .watch-toolbar {
+    position: fixed;
+    z-index: 35;
+    top: 72px;
+    right: 24px;
+    left: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    max-width: 1232px;
+    margin-inline: auto;
+    pointer-events: none;
+  }
+  .watch-status {
+    padding: 8px 12px;
+    border-radius: 4px;
+    background: #06080fbb;
+    font-size: 14px;
+    color: color-mix(in oklab, var(--color-bone) 80%, transparent);
+  }
+  .view-switch {
+    display: inline-flex;
+    padding: 4px;
+    border: 1px solid color-mix(in oklab, var(--color-bone) 20%, transparent);
+    border-radius: 8px;
+    background: #06080fe6;
+    pointer-events: auto;
+  }
+  .view-switch button {
+    min-width: 64px;
+    min-height: 44px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 200ms;
+  }
+  .view-switch button[aria-pressed="true"] {
+    background: var(--color-accent);
+    color: white;
+  }
+  .view-switch button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  /* Segmented choices in the quote form */
+  .choice-label {
+    position: relative;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .choice-label input {
+    position: absolute;
+    opacity: 0;
+  }
+  .choice-label span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 12px 16px;
+    border: 1px solid color-mix(in oklab, var(--color-bone) 20%, transparent);
+    border-radius: 6px;
+    font-size: 14px;
+    transition:
+      border-color 200ms,
+      background-color 200ms;
+  }
+  .choice-label:hover span {
+    border-color: color-mix(in oklab, var(--color-bone) 45%, transparent);
+  }
+  .choice-label input:checked + span {
+    border-color: var(--color-accent-lit);
+    background: #2247d633;
+    color: white;
+  }
+  .choice-label input:focus-visible + span {
+    outline: 2px solid var(--color-accent-lit);
+    outline-offset: 3px;
+  }
+
+  @media (min-width: 1024px) {
+    .service-grid-wide {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 767px) {
+    .section-heading {
+      display: block;
+    }
+    .section-heading > a {
+      margin-top: 24px;
+    }
+    .home-hero {
+      min-height: 740px;
+      padding-block: 128px 80px;
+    }
+    .hero-shade {
+      background:
+        linear-gradient(90deg, #06080fd9, #06080f80),
+        linear-gradient(0deg, #06080f, transparent);
+    }
+    .hero-caption {
+      right: auto;
+      left: 24px;
+      font-size: 11px;
+    }
+    .proof-strip dl > div {
+      padding: 24px 16px;
+    }
+    .proof-strip dl > div:nth-child(odd) {
+      padding-left: 0;
+    }
+    .proof-strip dl > div:nth-child(even) {
+      border-right: 0;
+    }
+    .service-grid {
+      gap: 16px;
+    }
+    .finish-feature {
+      grid-template-columns: 1fr;
+    }
+    .finish-copy {
+      padding: 28px 24px 32px;
+    }
+    .watch-status {
+      font-size: 12px;
+    }
+  }
+  @media (max-width: 540px) {
+    .service-grid {
+      grid-template-columns: 1fr;
+    }
+    .hero-intro {
+      font-size: 16px;
+    }
+    .home-hero {
+      min-height: 720px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .media-card:hover {
+      transform: none;
+    }
+    /* The scene never runs under reduced motion, so its loading cover never needs to show. */
+    .load-cover {
+      display: none !important;
+    }
+  }
 }

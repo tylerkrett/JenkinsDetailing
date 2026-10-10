@@ -10,7 +10,7 @@ import type { WorldLayout } from "./world";
  * normally.
  */
 
-export type SceneMode = "bay" | "alcove" | "void" | "off";
+export type SceneMode = "bay" | "off";
 
 type SceneState = {
   /** Which world the camera is in; set by each route. */

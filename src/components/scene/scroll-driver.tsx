@@ -5,6 +5,7 @@ import Lenis from "lenis";
 import { useEffect, useRef } from "react";
 
 import { clamp, lerp } from "~/lib/motion";
+import { getLenis, setLenis } from "~/lib/scene/lenis";
 import { activeWorld, useScene } from "~/lib/scene/store";
 import { beginSwipe, endSwipe, moveSwipe, type SwipeState } from "~/lib/scene/swipe";
 import { type WorldLayout, worldSlots } from "~/lib/scene/world";
@@ -17,8 +18,6 @@ const SETTLE_MS = 140;
 const SWIPE_S = 0.85;
 /** Touches that start inside these are the DOM's, never a walk. */
 const TOUCH_IGNORE = "a, button, input, textarea, select, [role='dialog'], header, nav";
-
-let lenisRef: Lenis | null = null;
 
 /**
  * Where a swipe can land: -1 is the top of the page, 0..n-1 the holds, n the end. The
@@ -98,11 +97,11 @@ export function ScrollDriver() {
       }
     });
     lenis.current = instance;
-    lenisRef = instance;
+    setLenis(instance);
     return () => {
       instance.destroy();
       lenis.current = null;
-      lenisRef = null;
+      setLenis(null);
     };
   }, []);
 
@@ -291,13 +290,7 @@ export function ScrollDriver() {
 
 /** Programmatic scroll (station index, keyboard nav). No-op before mount. */
 export function scrollToProgress(progress: number, duration = 0.9) {
-  const l = lenisRef;
+  const l = getLenis();
   if (!l) return;
   l.scrollTo(progress * l.limit, { duration });
-}
-
-/** Jump to the top instantly; used on every route change so pages never inherit a scroll. */
-export function resetScroll() {
-  lenisRef?.scrollTo(0, { immediate: true, force: true });
-  window.scrollTo(0, 0);
 }

@@ -90,6 +90,21 @@ collections:
                   label: "Item"
                   widget: "string"
                 required: false
+              - name: "faq"
+                label: "Questions and answers"
+                hint: "What customers ask about this service, answered on its page."
+                widget: "list"
+                label_singular: "Question"
+                fields:
+                  - name: "question"
+                    label: "Question"
+                    widget: "string"
+                    minlength: 1
+                  - name: "answer"
+                    label: "Answer"
+                    widget: "text"
+                    minlength: 1
+                required: false
               - name: "duration"
                 label: "How long it takes"
                 hint: "e.g. `One to three days`."
@@ -106,7 +121,7 @@ collections:
                 default: false
               - name: "image"
                 label: "Main photo"
-                hint: "Optional. Shown on the service page and in its share card."
+                hint: "Shown on the service page, its card and its share card. Without one, a still from the 3D bay is used."
                 widget: "image"
                 required: false
                 accept: "image/jpeg,image/png,image/webp"
@@ -124,7 +139,7 @@ collections:
                 required: false
               - name: "featured"
                 label: "Featured"
-                hint: "Featured services appear on the home page."
+                hint: "The first four featured services appear on the home page."
                 widget: "boolean"
                 default: false
               - name: "published"
@@ -272,7 +287,7 @@ collections:
                 minlength: 1
               - name: "text"
                 label: "Longer text"
-                hint: "For the process page. Blank lines separate paragraphs."
+                hint: "For the plain view of the watch page. Blank lines separate paragraphs."
                 widget: "text"
                 required: false
               - name: "service"
@@ -285,7 +300,14 @@ collections:
                 required: false
               - name: "image"
                 label: "Photo"
-                hint: "A real photo of this step. Optional."
+                hint: "A real photo of this step, for the plain view of the watch page. Optional; the scene still stands in."
+                widget: "image"
+                required: false
+                accept: "image/jpeg,image/png,image/webp"
+                choose_url: false
+              - name: "still"
+                label: "Scene still"
+                hint: "The picture on this step's tile on the home page. Leave empty to use the still captured from the 3D bay."
                 widget: "image"
                 required: false
                 accept: "image/jpeg,image/png,image/webp"
@@ -466,8 +488,23 @@ collections:
                 required: false
               - name: "headline"
                 label: "Headline"
-                hint: "The big line over the scene."
+                hint: "The big line over the hero photo."
                 widget: "string"
+                required: false
+              - name: "heroImage"
+                label: "Hero photo"
+                hint: "A wide photo behind the headline, at least 2000 px across. Leave empty to use the portrait photo."
+                widget: "image"
+                required: false
+                accept: "image/jpeg,image/png,image/webp"
+                choose_url: false
+              - name: "heroVideo"
+                label: "Hero video"
+                hint: "Optional. A short muted loop over the hero photo, e.g. `/videos/reveal.mp4`; the file has to be added to the site by a developer. It never plays for people who ask for less motion or save data."
+                widget: "string"
+                pattern:
+                  - "^\\/videos\\/[\\w.-]+\\.mp4$"
+                  - "Not in the expected format"
                 required: false
               - name: "subline"
                 label: "Subline"
@@ -494,7 +531,7 @@ collections:
                 widget: "text"
                 required: false
           - name: "process"
-            label: "Process page"
+            label: "Watch page (how we do it)"
             widget: "object"
             fields:
               - name: "title"
@@ -681,6 +718,26 @@ collections:
             hint: "One short line, used on the About page and in share cards."
             widget: "string"
             required: false
+          - name: "replyPromise"
+            label: "Reply promise"
+            hint: "How soon people hear back, shown beside the quote form and buttons. Only promise what you can keep."
+            widget: "string"
+            default: "We reply with a price and the earliest date, usually the same day."
+          - name: "stats"
+            label: "Facts under the home photo"
+            hint: "e.g. value `4,000 kg`, label `Dedicated underbody lift`. The strip shows four facts: the CarPro approval, the year and the Google rating come first, then these. Numbers count up as the strip scrolls into view."
+            widget: "list"
+            label_singular: "Fact"
+            fields:
+              - name: "label"
+                label: "Label"
+                widget: "string"
+                minlength: 1
+              - name: "value"
+                label: "Value"
+                widget: "string"
+                minlength: 1
+            required: false
           - name: "promise"
             label: "Promise"
             hint: "The one line at the top of the home page."
@@ -764,14 +821,14 @@ collections:
             required: false
           - name: "portrait"
             label: "Portrait photo"
-            hint: "Danny, for the About page."
+            hint: "Danny, for the About and contact pages, and the home page when it has no hero photo."
             widget: "image"
             required: false
             accept: "image/jpeg,image/png,image/webp"
             choose_url: false
           - name: "unitPhoto"
             label: "Unit photo"
-            hint: "The bay or the forecourt, for the contact page."
+            hint: "The bay or the forecourt, beside the story on the home page."
             widget: "image"
             required: false
             accept: "image/jpeg,image/png,image/webp"

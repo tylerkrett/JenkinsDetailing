@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { QuoteActions } from "~/components/home/quote-actions";
 import { JsonLd } from "~/components/site/json-ld";
 import { Photo } from "~/components/site/photo";
-import { getPages, getReviews, getServices, getSettings } from "~/lib/content";
+import { Eyebrow } from "~/components/ui/section-header";
+import { getPages, getProcess, getReviews, getServices, getSettings } from "~/lib/content";
 import { paragraphs } from "~/lib/format";
 import { OG, WEBSITE_ID, absolute, businessJsonLd, graph, ogImage, pageMetadata } from "~/lib/seo";
 
@@ -18,8 +19,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const [settings, services, reviews, { about }] = await Promise.all([getSettings(), getServices(), getReviews(), getPages()]);
+  const [settings, services, reviews, { about }, steps] = await Promise.all([
+    getSettings(),
+    getServices(),
+    getReviews(),
+    getPages(),
+    getProcess(),
+  ]);
   const story = paragraphs(about.story);
+  // The underside step has the real photo of the work at the unit.
+  const underneath = steps.find((s) => s.service === "undersealing");
   const structured = graph({
     "@type": "AboutPage",
     "@id": absolute("/about"),
@@ -36,11 +45,14 @@ export default async function AboutPage() {
       <JsonLd data={structured} />
       <article className="lg:grid lg:grid-cols-12 lg:gap-8">
         <div className="max-w-[62ch] lg:col-span-7">
-          <h1 className="font-display text-display-lg font-bold tracking-tight">{about.title}</h1>
+          <Eyebrow>
+            Founded in {settings.established} / {settings.town}
+          </Eyebrow>
+          <h1 className="font-display text-display-lg mt-4 font-bold tracking-tight">{about.title}</h1>
           {settings.tagline ? <p className="text-bone/70 mt-3">{settings.tagline}</p> : null}
           {about.intro ? <p className="text-bone/80 mt-6 text-lg">{about.intro}</p> : null}
           <div className="text-bone/85 mt-10 flex flex-col gap-5">
-            {story.map((p, i) => (
+            {story.slice(0, 2).map((p, i) => (
               <p key={i}>{p}</p>
             ))}
           </div>
@@ -74,6 +86,32 @@ export default async function AboutPage() {
           </aside>
         ) : null}
       </article>
+      {story.length > 2 ? (
+        <section
+          className="bg-photo-surface mt-24 grid gap-10 rounded-md p-6 sm:p-10 lg:grid-cols-2 lg:items-center"
+          aria-labelledby="garage-story"
+        >
+          {underneath?.image ? (
+            <Photo
+              image={underneath.image}
+              alt={`${underneath.title}, at ${settings.addressLine}`}
+              sizes="(min-width: 1280px) 560px, (min-width: 1024px) 44vw, calc(100vw - 6rem)"
+              className="aspect-[4/3] rounded-[4px]"
+            />
+          ) : null}
+          <div>
+            <Eyebrow>{settings.addressLine}</Eyebrow>
+            <h2 id="garage-story" className="font-display text-display-md mt-4 font-bold tracking-tight">
+              A family garage. <span className="sm:block">A proper detailing centre.</span>
+            </h2>
+            <div className="text-bone/75 mt-6 flex flex-col gap-4">
+              {story.slice(2).map((p, i) => (
+                <p key={i}>{p}</p>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

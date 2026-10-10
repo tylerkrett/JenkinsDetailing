@@ -1,6 +1,10 @@
 [
   {
     "slug": "detailing",
+    "faq": [
+      { "question": "Can you come to me?", "answer": "Yes. Detailing is available at the unit in Tregaron or at your door. Tell us your postcode when you ask for a quote." },
+      { "question": "How long will you need the car?", "answer": "Allow half a day to a full day, depending on its size, condition and the work agreed." }
+    ],
     "title": "Detailing",
     "promise": "A safe wash, a full decontamination and a proper finish, inside and out.",
     "description": "Every job starts the same way: snow foam to lift the grit before anything touches the paint, a two-bucket wash with grit guards, tar and iron fallout removed, a clay bar for what is bonded on, and a touchless dry. Inside, the seats and carpets are brushed and hoovered, the fabric steamed, the leather cleaned and fed, and the dash dressed matte, never greasy.\n\nWe work at the unit in Tregaron or at your door. Clients come from across Wales and from as far as London and Manchester.",
@@ -21,6 +25,10 @@
   },
   {
     "slug": "paint-correction",
+    "faq": [
+      { "question": "Can every scratch be removed?", "answer": "Paint correction works on defects in the clear coat. It cannot remove damage that has gone through it. We measure paint depth first and explain what can safely be corrected." },
+      { "question": "Which package does my car need?", "answer": "We inspect the paint before recommending Silver or Gold. The condition of the clear coat and the finish you want determine the stages of polishing." }
+    ],
     "title": "Paint correction",
     "promise": "Swirls, scratches and holograms removed by machine, then the gloss brought back.",
     "description": "Poor washing, brushes at the automatic car wash, winter road salt and years of sun all mark the clear coat. Under a hard light the paint shows fans of fine scratches; in daylight it just looks dull.\n\nAfter a full decontamination we measure the paint depth and write a defect report, then correct the paint in stages with a dual-action polisher: cutting compound to level the defects, a finer polish to refine, and a panel wipe to check the true finish. Stone chips are touched in with paint matched to the VIN. The work is finished with a ceramic coating so it stays that way.",
@@ -41,6 +49,10 @@
   },
   {
     "slug": "ceramic-protection",
+    "faq": [
+      { "question": "How long does the coating last?", "answer": "The coating offers two to three years of protection with the maintenance plan. We explain the aftercare and washing routine when you collect the car." },
+      { "question": "Can I collect the car straight after application?", "answer": "The coating needs at least twelve hours to cure indoors, out of direct sunlight. We include that time when agreeing your collection date." }
+    ],
     "title": "Ceramic protection",
     "promise": "A hard, hydrophobic layer over the paint that takes the abuse instead of the clear coat.",
     "description": "A ceramic coating is a liquid glass layer bonded to the paint. Water beads and sheets off it, dirt has less to grip, UV and chemicals are held off the clear coat, and washing becomes a rinse and a wipe.\n\nWe are a CarPro approved detailing centre. The coating is applied panel by panel with an applicator block, levelled after it flashes, and cured indoors for at least twelve hours out of direct sun. Wheels, glass and trim get their own coatings.",
@@ -60,6 +72,10 @@
   },
   {
     "slug": "undersealing",
+    "faq": [
+      { "question": "Does the car need to stay overnight?", "answer": "Yes. Allow two days including drying and curing. The chassis is dried with compressed air and left to air before the coating is applied." },
+      { "question": "What does the guarantee depend on?", "answer": "The four-year guarantee is tied to the maintenance programme, including a twelve-month inspection. Annual maintenance washing and inspection is £100." }
+    ],
     "title": "Undersealing and rust protection",
     "promise": "The chassis jet-washed, dried, treated and coated on our 4000 kg lift.",
     "description": "Mid Wales roads, salt and rain get under a car long before they show on top. Undersealing protects the metal you never see.\n\nUnderside total surface protection: a deep clean jet wash and chemical degrease of the whole chassis on the lift, wire-brushing of pitted or lightly corroded metal, a full dry with compressed air and at least twelve hours to air, then an anti-corrosion coating left to cure for another twelve hours. Under trays, arch liners and the spare wheel can be removed for a deeper treatment.\n\nExposed protection covers only the areas seen at an MOT: cleaned, dried overnight and protected with a durable wax oil coating.\n\nBadly rusted areas can be treated first with Hydrate 80, a rust converter that stops the corrosion before the coating goes on. We use Lanoguard, Bilt Hamber and Dynax UB, and we keep them on the shelf.",

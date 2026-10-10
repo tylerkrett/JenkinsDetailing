@@ -15,6 +15,7 @@ import { type z } from "zod";
 import {
   packagesSchema,
   pagesSchema,
+  pagesGeneratedSchema,
   type ProcessStep,
   type ProcessedImage,
   processInputSchema,
@@ -37,11 +38,30 @@ const PUBLIC_DIR = path.join(ROOT, "public");
 const PHOTO_SRC = path.join(PUBLIC_DIR, "photos");
 const PHOTO_OUT = path.join(PUBLIC_DIR, "photos-derived");
 
-/** Widths emitted per image. 4096 is only reached by before-and-after pairs. Nothing is upscaled. */
-const LADDER = [480, 1024, 2048] as const;
-const LADDER_ZOOM = [480, 1024, 2048, 4096] as const;
+/**
+ * Widths emitted per image. 4096 is only reached by before-and-after pairs. Nothing is
+ * upscaled. The in-between steps (768, 1536) stop phones from jumping to a file far
+ * larger than the card they fill: a 364 px card on a 3x screen takes 1536, not 2048.
+ */
+const LADDER = [480, 768, 1024, 1536, 2048] as const;
+const LADDER_ZOOM = [480, 768, 1024, 1536, 2048, 4096] as const;
 const WEBP_QUALITY = 82;
 const LQIP_SIZE = 24;
+
+/**
+ * The still from the bay (public/photos/acts, shot by scripts/act-stills.mjs) that stands
+ * in for each service until it has a photo of its own.
+ */
+const ACT_FOR_SERVICE: Record<string, string> = {
+  detailing: "wash",
+  "paint-correction": "correct",
+  "ceramic-protection": "protect",
+  undersealing: "under",
+  sanitising: "inside",
+  "yacht-detailing": "reveal",
+  "caravan-cleaning": "arrive",
+};
+const actStill = (act: string) => `acts/${act}.jpg`;
 
 async function readJson(file: string): Promise<unknown> {
   return JSON.parse(await readFile(path.join(CONTENT_DIR, file), "utf8"));
@@ -180,7 +200,7 @@ function writeGenerated(name: string, data: unknown) {
 
 async function main() {
   const settingsIn = parseOrFail("settings.json", settingsSchema, await readJson("settings.json"));
-  parseOrFail("pages.json", pagesSchema, await readJson("pages.json"));
+  const pagesIn = parseOrFail("pages.json", pagesSchema, await readJson("pages.json"));
   const packages = parseOrFail("packages.json", packagesSchema, await readJson("packages.json"));
   parseOrFail("reviews.json", reviewsSchema, await readJson("reviews.json"));
   const servicesIn = parseOrFail("services.json", servicesInputSchema, await readJson("services.json"));
@@ -193,15 +213,24 @@ async function main() {
     unitPhoto: await optionalImage(settingsIn.unitPhoto),
   });
   await writeGenerated("settings", settings);
+  await writeGenerated(
+    "pages",
+    pagesGeneratedSchema.parse({
+      ...pagesIn,
+      home: { ...pagesIn.home, heroImage: await optionalImage(pagesIn.home.heroImage) },
+    }),
+  );
   console.log("  ✓ settings");
 
   const services: Service[] = [];
   for (const input of [...servicesIn].filter((s) => s.published).sort((a, b) => a.sortOrder - b.sortOrder)) {
     const { image, gallery, ...rest } = input;
+    const still = await processImage(actStill(ACT_FOR_SERVICE[input.slug] ?? "wash"));
     services.push(
       serviceSchema.parse({
         ...rest,
-        image: await optionalImage(image),
+        image: image ? await processImage(image) : still,
+        still,
         gallery: await Promise.all(gallery.map((g) => processImage(g))),
       }),
     );
@@ -216,10 +245,13 @@ async function main() {
   const steps: ProcessStep[] = [];
   const ordered = [...processIn].sort((a, b) => a.act - b.act || a.sortOrder - b.sortOrder);
   for (const [index, input] of ordered.entries()) {
-    const { image, ...rest } = input;
+    const { image, still, ...rest } = input;
     if (rest.service && !serviceSlugs.has(rest.service))
       console.warn(`  ! process.json: "${rest.slug}" points at unknown service "${rest.service}"`);
-    steps.push(processStepSchema.parse({ ...rest, index, image: await optionalImage(image) }));
+    const frame = await processImage(still ?? actStill(input.slug));
+    steps.push(
+      processStepSchema.parse({ ...rest, index, still: frame, image: image ? await processImage(image) : frame }),
+    );
     console.log(`  ✓ step     ${String(input.act)}  ${input.slug}`);
   }
   await writeGenerated("process", steps);

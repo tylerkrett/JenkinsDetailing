@@ -13,6 +13,9 @@ const config = {
   // Artwork sizes are generated at build time by scripts/prepare-content.ts and served as
   // static assets, so Next's runtime optimiser (unavailable on Workers) is not needed.
   images: { unoptimized: true },
+  async redirects() {
+    return [{ source: "/process", destination: "/watch?view=plain", permanent: true }];
+  },
 };
 
 export default config;

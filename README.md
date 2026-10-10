@@ -1,10 +1,13 @@
 # Jenkins Detailing
 
-A scroll-driven 3D site for Jenkins Detailing, a CarPro approved detailing centre in
-Tregaron, Mid Wales. Scrolling cleans a supercar in the bay, act by act (arrive, wash,
-under the car, inside, paint correction, ceramic protection, reveal), and every act stops
-to say what is being done and why. Every page is also a complete, crawlable website
-without WebGL. The site sells nothing; it asks for the job.
+A site for Jenkins Detailing, a CarPro approved detailing centre in Tregaron, Mid Wales.
+The home page and every inner page are plain, fast and photo led, with no WebGL. The
+scroll-driven 3D bay lives on `/watch`: scrolling cleans a supercar act by act (arrive,
+wash, under the car, inside, paint correction, ceramic protection, reveal), and every act
+stops to say what is being done and why. A 3D | Plain switch there swaps it for the same
+steps as a plain page and remembers the choice for a year in the `jd-view` cookie
+(`?view=plain` in a link sets it too); reduced motion, a data saver or no WebGL2 always get
+the plain page. The site sells nothing; it asks for the job.
 
 Plan, research and design rationale: `/Users/krett/.claude/plans/jenkins-detailing.md`.
 The codebase is a fork of the HIMBAD site (`../Himbad`); the scene plumbing, content
@@ -45,7 +48,9 @@ directly: all reads go through `src/lib/content/index.ts`.
 spans and the dwell windows. `src/components/scene/bay/` holds the meshes. Everything is a
 pure function of scroll progress. The camera rig, scroll driver, captions and index in
 `src/components/scene/` only ever talk to the `WorldLayout` interface in
-`src/lib/scene/world.ts`.
+`src/lib/scene/world.ts`. The canvas mounts only in the 3D view of `/watch`
+(`src/components/watch/`), so no other page downloads three.js, the car or the textures.
+`/process` redirects to `/watch?view=plain`.
 
 ## Verification tooling
 
@@ -54,6 +59,8 @@ Headless Chrome via `playwright-core` and the locally installed Chrome:
 - `node scripts/shot.mjs <url> <out.png> [w] [h] [fullPage]` screenshots a page and prints console errors.
 - `node scripts/perf-check.mjs <url> [passes]` scrolls the acts repeatedly and samples draw calls and heap.
 - In development `window.__jdGo(i)` jumps to act `i` and `window.__jd.scene()` reports the scene state.
+- `node scripts/act-stills.mjs [url]` shoots one 2x still per act into `public/photos/acts/` (dev server only). Run `pnpm content` afterwards.
+- `node scripts/redesign-check.mjs [base]` screenshots every page at 390, 768 and 1440 px into `.playwright-mcp/redesign/`, runs axe, and checks the 3D | Plain switch (cookie, reload, new tab, `?view=`, `?act=`, reduced motion, no WebGL, Save-Data), the redirect, the keyboard paths and the quote form controls. `--no-3d` skips the WebGL part; `--only-3d` runs only that.
 
 ## Environment
 

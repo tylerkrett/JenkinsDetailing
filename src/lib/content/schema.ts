@@ -73,6 +73,13 @@ export const settingsSchema = z.object({
   registeredOffice: z.string().default(""),
   vatNumber: z.string().default(""),
   tagline: z.string().default(""),
+  /** How soon a quote request is answered, shown beside the form and the quote buttons. */
+  replyPromise: z.string().default("We reply with a price and the earliest date, usually the same day."),
+  /** Facts for the strip under the home hero, e.g. `4,000 kg` / `Dedicated underbody lift`. */
+  stats: z
+    .array(z.object({ label: z.string().min(1), value: z.string().min(1) }))
+    .max(4)
+    .default([]),
   /** The one-line promise on the home page. */
   promise: z.string().default(""),
   addressLine: z.string().min(1),
@@ -126,6 +133,8 @@ export const serviceInputSchema = z.object({
   priceNote: z.string().default(""),
   /** What is included, one item per line. */
   includes: z.array(z.string().min(1)).default([]),
+  /** Questions people ask about this service, answered on its page. */
+  faq: z.array(z.object({ question: z.string().min(1), answer: z.string().min(1) })).default([]),
   duration: z.string().default(""),
   guarantee: z.string().default(""),
   /** Available at the customer's door as well as at the unit. */
@@ -141,7 +150,10 @@ export const servicesInputSchema = z.array(serviceInputSchema).superRefine(uniqu
 export const serviceSchema = serviceInputSchema
   .omit({ image: true, gallery: true })
   .extend({
+    /** The service's photo, or its still from the bay when it has none. */
     image: processedImageSchema.optional(),
+    /** Always the still from the bay, so a page can avoid showing one photo twice. */
+    still: processedImageSchema.optional(),
     gallery: z.array(processedImageSchema),
   });
 
@@ -182,18 +194,19 @@ export const processStepInputSchema = z.object({
   text: z.string().default(""),
   /** Slug of the service this step links to. */
   service: slug.optional(),
+  /** A frame from the bay for the home page's step tiles; defaults to `acts/<slug>.jpg`. */
+  still: imageFile.optional(),
   image: imageFile.optional(),
   sortOrder: z.number().int().default(0),
 });
 export const processInputSchema = z.array(processStepInputSchema).superRefine(uniqueSlugs);
 
-export const processStepSchema = processStepInputSchema
-  .omit({ image: true })
-  .extend({
-    /** Position in the sequence, 0-based. */
-    index: z.number().int().nonnegative(),
-    image: processedImageSchema.optional(),
-  });
+export const processStepSchema = processStepInputSchema.omit({ image: true, still: true }).extend({
+  /** Position in the sequence, 0-based. */
+  index: z.number().int().nonnegative(),
+  image: processedImageSchema.optional(),
+  still: processedImageSchema.optional(),
+});
 
 // ---------------------------------------------------------------------------------
 // Work: before and after pairs
@@ -249,6 +262,13 @@ const pageCopy = z.object({
 });
 export const pagesSchema = z.object({
   home: pageCopy.extend({
+    /** The full-bleed photo behind the home headline. */
+    heroImage: imageFile.optional(),
+    /** An optional short muted loop over the hero photo, e.g. `/videos/reveal.mp4`. */
+    heroVideo: z
+      .string()
+      .regex(/^\/videos\/[\w.-]+\.mp4$/)
+      .optional(),
     headline: z.string().default(""),
     subline: z.string().default(""),
   }),
@@ -260,6 +280,10 @@ export const pagesSchema = z.object({
   privacy: pageCopy.extend({ body: z.string().default("") }),
   terms: pageCopy.extend({ body: z.string().default("") }),
   play: pageCopy,
+});
+
+export const pagesGeneratedSchema = pagesSchema.extend({
+  home: pagesSchema.shape.home.omit({ heroImage: true }).extend({ heroImage: processedImageSchema.optional() }),
 });
 
 // ---------------------------------------------------------------------------------
@@ -292,7 +316,7 @@ export type WorkInput = z.infer<typeof workInputSchema>;
 export type WorkPair = z.infer<typeof workSchema>;
 export type Review = z.infer<typeof reviewSchema>;
 export type ReviewSource = z.infer<typeof reviewSourceSchema>;
-export type SitePages = z.infer<typeof pagesSchema>;
+export type SitePages = z.infer<typeof pagesGeneratedSchema>;
 export type VehicleSize = z.infer<typeof vehicleSizeSchema>;
 export type Where = z.infer<typeof whereSchema>;
 export type QuoteInput = z.infer<typeof quoteInputSchema>;

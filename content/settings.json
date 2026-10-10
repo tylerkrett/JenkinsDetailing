@@ -16,6 +16,8 @@
   "hoursSpec": "Mo-Fr 09:00-17:00",
   "directionsUrl": "https://www.google.com/maps/search/?api=1&query=Rose+Garage+Dewi+Road+Tregaron+SY25+6JN",
   "established": 2013,
+  "replyPromise": "We reply with a price and the earliest date, usually the same day.",
+  "stats": [{ "label": "Dedicated underbody lift", "value": "4,000 kg" }],
   "carproApproved": true,
   "portrait": "about/danny-foam.jpg",
   "socials": {

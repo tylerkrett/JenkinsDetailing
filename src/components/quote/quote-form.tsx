@@ -95,8 +95,8 @@ export function QuoteForm({ services, service, contact, onSuccess, onClose, clas
     email: useRef<HTMLInputElement>(null),
     phone: useRef<HTMLInputElement>(null),
     vehicle: useRef<HTMLInputElement>(null),
-    size: useRef<HTMLSelectElement>(null),
-    where: useRef<HTMLSelectElement>(null),
+    size: useRef<HTMLInputElement>(null),
+    where: useRef<HTMLInputElement>(null),
     postcode: useRef<HTMLInputElement>(null),
     message: useRef<HTMLTextAreaElement>(null),
   };
@@ -186,25 +186,23 @@ export function QuoteForm({ services, service, contact, onSuccess, onClose, clas
       className={cn("relative flex flex-col gap-5", className)}
       aria-describedby={submit.isError ? ids.status : undefined}
     >
-      <div>
-        <label htmlFor={ids.service} className={labelClass}>
-          Service
-        </label>
-        <select
-          id={ids.service}
-          name="service"
-          value={values.service}
-          onChange={(e) => update("service", e.target.value)}
-          className={cn(inputClass, "bg-ink-2")}
-        >
-          <option value="">Not sure yet</option>
-          {services.map((s) => (
-            <option key={s.slug} value={s.slug}>
-              {s.title}
-            </option>
+      <fieldset>
+        <legend className={labelClass}>Service</legend>
+        <div className="flex flex-wrap gap-2">
+          {[{ slug: "", title: "Not sure yet" }, ...services].map((s) => (
+            <label className="choice-label" key={s.slug}>
+              <input
+                type="radio"
+                name="service"
+                value={s.slug}
+                checked={values.service === s.slug}
+                onChange={() => update("service", s.slug)}
+              />
+              <span>{s.title}</span>
+            </label>
           ))}
-        </select>
-      </div>
+        </div>
+      </fieldset>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
@@ -287,54 +285,33 @@ export function QuoteForm({ services, service, contact, onSuccess, onClose, clas
         {errorLine("vehicle")}
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <div>
-          <label htmlFor={ids.size} className={labelClass}>
-            Size
-          </label>
-          <select
-            ref={refs.size}
-            id={ids.size}
-            name="size"
-            value={values.size}
-            onChange={(e) => update("size", e.target.value)}
-            aria-invalid={errors.size ? true : undefined}
-            aria-describedby={`${ids.size}-error`}
-            className={cn(inputClass, "bg-ink-2")}
-          >
-            <option value="">Choose</option>
-            {SIZES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
+      {(
+        [
+          { field: "size", label: "Size", options: SIZES },
+          { field: "where", label: "Where", options: WHERES },
+        ] as const
+      ).map(({ field, label, options }) => (
+        <fieldset key={field} aria-describedby={`${ids[field]}-error`}>
+          <legend className={labelClass}>{label}</legend>
+          <div className="flex flex-wrap gap-2">
+            {options.map((option, index) => (
+              <label key={option.value} className="choice-label">
+                <input
+                  ref={index === 0 ? refs[field] : undefined}
+                  type="radio"
+                  name={field}
+                  value={option.value}
+                  checked={values[field] === option.value}
+                  onChange={() => update(field, option.value)}
+                  aria-describedby={`${ids[field]}-error`}
+                />
+                <span>{option.label}</span>
+              </label>
             ))}
-          </select>
-          {errorLine("size")}
-        </div>
-        <div>
-          <label htmlFor={ids.where} className={labelClass}>
-            Where
-          </label>
-          <select
-            ref={refs.where}
-            id={ids.where}
-            name="where"
-            value={values.where}
-            onChange={(e) => update("where", e.target.value)}
-            aria-invalid={errors.where ? true : undefined}
-            aria-describedby={`${ids.where}-error`}
-            className={cn(inputClass, "bg-ink-2")}
-          >
-            <option value="">Choose</option>
-            {WHERES.map((w) => (
-              <option key={w.value} value={w.value}>
-                {w.label}
-              </option>
-            ))}
-          </select>
-          {errorLine("where")}
-        </div>
-      </div>
+          </div>
+          {errorLine(field)}
+        </fieldset>
+      ))}
 
       {values.where === "mobile" ? (
         <div>

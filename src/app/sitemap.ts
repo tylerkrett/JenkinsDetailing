@@ -19,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
       images: [shareSrc(s.image), OG.service(s.slug)].flatMap((src) => (src ? [absolute(src)] : [])),
     })),
-    { url: `${base}/process`, lastModified, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/watch`, lastModified, changeFrequency: "monthly", priority: 0.8 },
     {
       url: `${base}/work`,
       lastModified,

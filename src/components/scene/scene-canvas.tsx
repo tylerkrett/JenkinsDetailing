@@ -18,10 +18,9 @@ import { Effects } from "./effects";
 import { ScrollDriver, scrollToProgress } from "./scroll-driver";
 
 /**
- * The one persistent canvas. Mounted in the root layout, it never unmounts on
- * navigation; each route sets a scene mode and the camera moves. The bay is the only
- * world, so it stays mounted; "off" routes stop the frame loop and fade it out. Under
- * reduced motion or without WebGL2 it renders nothing and the DOM stands alone.
+ * The scene's canvas. It mounts with the 3D view of /watch and unmounts when the visitor
+ * switches to the plain view or leaves, resetting the shared scene state so the next
+ * mount starts clean. Under reduced motion or without WebGL2 it renders nothing.
  */
 export function SceneCanvas() {
   const pathname = usePathname();
@@ -35,6 +34,9 @@ export function SceneCanvas() {
     const s = detectSceneSupport();
     setSupport(s);
     setActive(s.ok);
+    return () => {
+      useScene.setState({ active: false, ready: false, world: null, progress: 0, entering: false });
+    };
   }, [setActive]);
 
   useEffect(() => setMode(modeForPath(pathname)), [pathname, setMode]);
@@ -46,12 +48,7 @@ export function SceneCanvas() {
   return (
     <div
       aria-hidden="true"
-      className={cn(
-        "fixed inset-0 z-0 transition-opacity duration-700 ease-out",
-        mode === "off" && "opacity-0",
-        mode === "void" && "opacity-40",
-        mode === "alcove" && "opacity-70",
-      )}
+      className={cn("fixed inset-0 z-0 transition-opacity duration-700 ease-out", mode === "off" && "opacity-0")}
     >
       <Canvas
         dpr={dpr}

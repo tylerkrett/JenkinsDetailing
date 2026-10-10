@@ -20,15 +20,15 @@ export function ProcessList({ steps, full = false }: Props) {
         <li
           key={s.slug}
           id={s.slug}
-          className={cn("hairline grid gap-6 border-t py-8 lg:grid-cols-12 lg:gap-8", full && "py-12")}
+          className={cn("hairline grid scroll-mt-40 gap-6 border-t py-8 lg:grid-cols-12 lg:gap-8", full && "py-12")}
         >
           <div className="lg:col-span-1">
-            <span className="font-display text-accent text-lg font-bold tabular-nums">
+            <span className="font-display text-accent-lit text-lg font-bold tabular-nums">
               {String(s.act).padStart(2, "0")}
             </span>
           </div>
           <div className={cn("flex flex-col gap-3", full && s.image ? "lg:col-span-6" : "lg:col-span-8")}>
-            <h3 className="font-display text-display-md font-bold tracking-tight">{s.title}</h3>
+            <h2 className="font-display text-display-md font-bold tracking-tight">{s.title}</h2>
             <p className="text-bone/90">{s.what}</p>
             <p className="text-bone/60">{s.why}</p>
             {full && s.text ? (

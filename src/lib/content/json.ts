@@ -2,7 +2,7 @@ import "server-only";
 import type { z } from "zod";
 
 import packagesJson from "../../../content/packages.json";
-import pagesJson from "../../../content/pages.json";
+import pagesJson from "../../../content/pages.generated.json";
 import processJson from "../../../content/process.generated.json";
 import reviewsJson from "../../../content/reviews.json";
 import servicesJson from "../../../content/services.generated.json";
@@ -10,7 +10,7 @@ import settingsJson from "../../../content/settings.generated.json";
 import workJson from "../../../content/work.generated.json";
 import {
   packagesSchema,
-  pagesSchema,
+  pagesGeneratedSchema,
   type processStepSchema,
   reviewsSchema,
   type serviceSchema,
@@ -28,7 +28,7 @@ const work = workJson as z.infer<typeof workSchema>[];
 const settings = settingsJson as z.infer<typeof settingsGeneratedSchema>;
 const packages = packagesSchema.parse(packagesJson).sort((a, b) => a.sortOrder - b.sortOrder);
 const reviews = reviewsSchema.parse(reviewsJson);
-const pages = pagesSchema.parse(pagesJson);
+const pages = pagesGeneratedSchema.parse(pagesJson);
 
 export async function getServices() {
   return services;

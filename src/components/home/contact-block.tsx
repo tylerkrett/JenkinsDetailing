@@ -1,37 +1,27 @@
-import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
-
+import { Eyebrow } from "~/components/ui/section-header";
 import type { Service, SiteSettings } from "~/lib/content";
 import { lines, telHref } from "~/lib/format";
 
+import { MapTile } from "./map-tile";
 import { QuoteActions } from "./quote-actions";
 
 type Props = { settings: SiteSettings; services: Pick<Service, "slug" | "title">[] };
 
-/** Address, hours, phone and the two ways to ask. Closes the home page and the contact page. */
+/** Address, hours, phone, the map and the two ways to ask. Closes the home page. */
 export function ContactBlock({ settings: s, services }: Props) {
   return (
-    <section aria-labelledby="find-us" className="mx-auto max-w-7xl px-6 py-20">
-      <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+    <section aria-labelledby="find-us" className="site-container section-space">
+      <div data-reveal className="lg:grid lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-5">
-          <h2 id="find-us" className="font-display text-display-lg font-bold tracking-tight">
-            Find us
+          <Eyebrow>Get a quote</Eyebrow>
+          <h2 id="find-us" className="font-display text-display-lg mt-4 font-bold tracking-tight">
+            Let’s talk about your car.
           </h2>
           <address className="text-bone/80 mt-6 not-italic">
             {s.addressLine}
             <br />
             {s.town} {s.postcode}
           </address>
-          {s.directionsUrl ? (
-            <a
-              href={s.directionsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-accent-lit mt-3 inline-flex items-center gap-1 underline-offset-[6px] hover:underline"
-            >
-              Directions
-              <ArrowUpRight size={16} aria-hidden="true" />
-            </a>
-          ) : null}
           <p className="text-bone/80 mt-6">
             {lines(s.hoursText).map((l, i) => (
               <span key={i}>
@@ -52,6 +42,10 @@ export function ContactBlock({ settings: s, services }: Props) {
             send photos on WhatsApp.
           </p>
           <QuoteActions services={services} settings={s} className="mt-8" />
+          <p className="text-bone/60 mt-5 text-sm">{s.replyPromise}</p>
+          <div className="mt-10">
+            <MapTile settings={s} />
+          </div>
         </div>
       </div>
     </section>

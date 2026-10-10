@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { parseView, VIEW_COOKIE, VIEW_MAX_AGE } from "~/lib/view";
 
 const CANONICAL_HOST = "jenkinsdetailing.com";
 
@@ -47,7 +48,19 @@ export function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const legacy = legacyRedirect(url);
   const wrongHost = host === `www.${CANONICAL_HOST}` || host.endsWith(".workers.dev");
-  if (!legacy && !wrongHost) return NextResponse.next();
+  if (!legacy && !wrongHost) {
+    const response = NextResponse.next();
+    const view = parseView(url.searchParams.get("view"));
+    if (url.pathname === "/watch" && view) {
+      response.cookies.set(VIEW_COOKIE, view, {
+        path: "/",
+        maxAge: VIEW_MAX_AGE,
+        sameSite: "lax",
+        secure: url.protocol === "https:",
+      });
+    }
+    return response;
+  }
   if (wrongHost) {
     url.protocol = "https:";
     url.host = CANONICAL_HOST;
@@ -62,5 +75,5 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   // Pages, metadata routes and the old index.php; static files and the API keep their own hosts.
-  matcher: ["/((?!_next/|api/|photos/|photos-derived/|og/|brand/|icons/|models/|decoders/|admin/|favicon.ico).*)"],
+  matcher: ["/((?!_next/|api/|photos/|photos-derived/|videos/|og/|brand/|icons/|models/|decoders/|admin/|favicon.ico).*)"],
 };
