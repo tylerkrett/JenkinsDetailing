@@ -75,8 +75,12 @@ export function prefetchCar(mobile: boolean) {
   download(carModelUrl(mobile)).done.catch(() => undefined);
 }
 
-/** The scene readying its shaders and textures (see components/scene/warmup.tsx). */
-const warmedUp: Loader = (report) => whenWarm().then(() => report(1));
+/**
+ * The scene readying its shaders and textures (see components/scene/warmup.tsx). Never
+ * holds the preloader for good: should the warm-up not report, it lifts all the same.
+ */
+const warmedUp: Loader = (report) =>
+  Promise.race([whenWarm(), new Promise((resolve) => setTimeout(resolve, 16000))]).then(() => report(1));
 
 /** The loaders the preloader gates on for the bay: the car, then the compile. */
 export function bayLoaders(mobile: boolean): Loader[] {

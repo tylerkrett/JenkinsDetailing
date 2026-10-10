@@ -31,6 +31,11 @@ type SceneState = {
   active: boolean;
   /** Whether the preloader has finished. */
   ready: boolean;
+  /**
+   * Whether every shader has compiled (see components/scene/warmup.tsx). The canvas holds
+   * its frame loop until then, so no frame ever blocks on a compile in progress.
+   */
+  compiled: boolean;
   /** True while the click-to-enter sequence runs; scroll and keys are locked. */
   entering: boolean;
   /**
@@ -47,6 +52,7 @@ type SceneState = {
   setStationCount: (n: number) => void;
   setActive: (active: boolean) => void;
   setReady: (ready: boolean) => void;
+  setCompiled: (compiled: boolean) => void;
   setEntering: (entering: boolean) => void;
   setEnterStation: (fn: (() => void) | null) => void;
 };
@@ -60,6 +66,7 @@ export const useScene = create<SceneState>((set) => ({
   stationCount: 0,
   active: false,
   ready: false,
+  compiled: false,
   entering: false,
   enterStation: null,
 
@@ -74,6 +81,7 @@ export const useScene = create<SceneState>((set) => ({
   setStationCount: (stationCount) => set({ stationCount }),
   setActive: (active) => set({ active }),
   setReady: (ready) => set({ ready }),
+  setCompiled: (compiled) => set({ compiled }),
   setEntering: (entering) => set({ entering }),
   setEnterStation: (enterStation) => set({ enterStation }),
 }));

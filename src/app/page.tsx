@@ -11,6 +11,7 @@ import { QuoteActions } from "~/components/home/quote-actions";
 import { Reviews } from "~/components/home/reviews";
 import { SectionReveals } from "~/components/home/section-reveals";
 import { CARD_SIZES, ServiceCard } from "~/components/home/service-card";
+import { WaitBlock } from "~/components/home/wait-block";
 import { JsonLd } from "~/components/site/json-ld";
 import { Photo } from "~/components/site/photo";
 import { Eyebrow, SectionHeader } from "~/components/ui/section-header";
@@ -255,6 +256,7 @@ export default async function HomePage() {
       ) : null}
 
       <ContactBlock settings={settings} services={services} />
+      <WaitBlock />
     </main>
   );
 }

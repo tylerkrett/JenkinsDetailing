@@ -290,156 +290,156 @@ export function Bay({ mobile }: Props) {
 
       {/* Everything that never moves, merged into a few dozen draw calls (see Batched). */}
       <Batched>
-      {/* Floor: the tiles inside. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[W * 2, L]} />
-        <meshStandardMaterial
-          map={tex.tiles}
-          roughness={0.55}
-          metalness={0.05}
-        />
-      </mesh>
+        {/* Floor: the tiles inside. */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <planeGeometry args={[W * 2, L]} />
+          <meshStandardMaterial
+            map={tex.tiles}
+            roughness={0.55}
+            metalness={0.05}
+          />
+        </mesh>
 
-      {/* Walls, ceiling and the back. */}
-      <mesh position={[-W, H / 2, 0]}>
-        <boxGeometry args={[0.2, H, L]} />
-        <meshStandardMaterial map={tex.wall} roughness={0.92} />
-      </mesh>
-      <mesh position={[W, H / 2, 0]}>
-        <boxGeometry args={[0.2, H, L]} />
-        <meshStandardMaterial map={tex.wall} roughness={0.92} />
-      </mesh>
-      <mesh position={[0, H / 2, -L / 2]}>
-        <boxGeometry args={[W * 2, H, 0.2]} />
-        <meshStandardMaterial map={tex.wall} roughness={0.92} />
-      </mesh>
-      <mesh position={[0, H + 0.1, 0]}>
-        <boxGeometry args={[W * 2, 0.2, L]} />
-        <meshStandardMaterial color="#b9bec6" roughness={1} />
-      </mesh>
-
-      {/* The CARPRO sign high on the back wall, the poster beside it. */}
-      <mesh position={[1.4, H - 0.75, -L / 2 + 0.12]}>
-        <planeGeometry args={[2.6, 0.65]} />
-        <meshStandardMaterial map={tex.carpro} roughness={0.6} />
-      </mesh>
-      <mesh position={[-2.6, 2.2, -L / 2 + 0.12]}>
-        <planeGeometry args={[1.2, 0.9]} />
-        <meshStandardMaterial map={tex.poster} roughness={0.5} />
-      </mesh>
-
-      {/* Left wall: two shelving units full of bottles. */}
-      {[-3.6, 0.4].map((z, i) => (
-        <group key={z} position={[-W + 0.11, 0, z]}>
-          {[0.75, 1.35, 1.95].map((y, j) => (
-            <group key={y}>
-              <mesh position={[0.2, y, 0]}>
-                <boxGeometry args={[0.4, 0.04, 2.6]} />
-                <meshStandardMaterial
-                  color="#2b2e34"
-                  roughness={0.7}
-                  metalness={0.4}
-                />
-              </mesh>
-              <mesh
-                position={[0.22, y + 0.24, 0]}
-                rotation={[0, Math.PI / 2, 0]}
-              >
-                <planeGeometry args={[2.5, 0.44]} />
-                <meshStandardMaterial
-                  map={(i + j) % 2 ? tex.bottles : tex.bottles2}
-                  roughness={0.5}
-                  transparent
-                />
-              </mesh>
-            </group>
-          ))}
-          <mesh position={[0.2, 1.3, -1.32]}>
-            <boxGeometry args={[0.42, 2.6, 0.04]} />
-            <meshStandardMaterial
-              color="#2b2e34"
-              roughness={0.7}
-              metalness={0.4}
-            />
-          </mesh>
-          <mesh position={[0.2, 1.3, 1.32]}>
-            <boxGeometry args={[0.42, 2.6, 0.04]} />
-            <meshStandardMaterial
-              color="#2b2e34"
-              roughness={0.7}
-              metalness={0.4}
-            />
-          </mesh>
-        </group>
-      ))}
-
-      {/* Right wall: the tool slatwall, a cabinet and a trolley. */}
-      <mesh position={[W - 0.11, 1.75, -2.4]} rotation={[0, -Math.PI / 2, 0]}>
-        <planeGeometry args={[3.6, 1.8]} />
-        <meshStandardMaterial map={tex.tools} roughness={0.7} />
-      </mesh>
-      <mesh position={[W - 0.5, 0.5, 1.6]} castShadow>
-        <boxGeometry args={[0.7, 1.0, 1.4]} />
-        <meshStandardMaterial
-          color="#c8102e"
-          roughness={0.45}
-          metalness={0.5}
-        />
-      </mesh>
-      <mesh position={[W - 0.5, 0.42, 4.2]} castShadow>
-        <boxGeometry args={[0.6, 0.84, 0.9]} />
-        <meshStandardMaterial color="#2b2e34" roughness={0.6} metalness={0.5} />
-      </mesh>
-
-      {/* The front: wall either side of the door, the shutter drum above it, the shutter up. */}
-      {[-1, 1].map((sx) => (
-        <mesh key={sx} position={[sx * (W / 2 + 1.55), H / 2, BAY.shutterZ]}>
-          <boxGeometry args={[W - 3.1, H, 0.3]} />
+        {/* Walls, ceiling and the back. */}
+        <mesh position={[-W, H / 2, 0]}>
+          <boxGeometry args={[0.2, H, L]} />
           <meshStandardMaterial map={tex.wall} roughness={0.92} />
         </mesh>
-      ))}
-      <mesh position={[0, H - 0.25, BAY.shutterZ]}>
-        <boxGeometry args={[6.4, 0.5, 0.5]} />
-        <meshStandardMaterial color="#8d939a" roughness={0.5} metalness={0.5} />
-      </mesh>
-      <mesh position={[0, H - 0.75, BAY.shutterZ]}>
-        <planeGeometry args={[6.2, 0.5]} />
-        <meshStandardMaterial
-          map={tex.shutter}
-          roughness={0.5}
-          metalness={0.5}
-          side={2}
-        />
-      </mesh>
+        <mesh position={[W, H / 2, 0]}>
+          <boxGeometry args={[0.2, H, L]} />
+          <meshStandardMaterial map={tex.wall} roughness={0.92} />
+        </mesh>
+        <mesh position={[0, H / 2, -L / 2]}>
+          <boxGeometry args={[W * 2, H, 0.2]} />
+          <meshStandardMaterial map={tex.wall} roughness={0.92} />
+        </mesh>
+        <mesh position={[0, H + 0.1, 0]}>
+          <boxGeometry args={[W * 2, 0.2, L]} />
+          <meshStandardMaterial color="#b9bec6" roughness={1} />
+        </mesh>
 
-      {/* What is on the walls: the badge chart, the enamel signs and the product boards. */}
-      <Decor mobile={mobile} />
+        {/* The CARPRO sign high on the back wall, the poster beside it. */}
+        <mesh position={[1.4, H - 0.75, -L / 2 + 0.12]}>
+          <planeGeometry args={[2.6, 0.65]} />
+          <meshStandardMaterial map={tex.carpro} roughness={0.6} />
+        </mesh>
+        <mesh position={[-2.6, 2.2, -L / 2 + 0.12]}>
+          <planeGeometry args={[1.2, 0.9]} />
+          <meshStandardMaterial map={tex.poster} roughness={0.5} />
+        </mesh>
 
-      {/* Everything beyond the shutter: the forecourt, the town, the sky, the rain. */}
-      <Exterior mobile={mobile} />
+        {/* Left wall: two shelving units full of bottles. */}
+        {[-3.6, 0.4].map((z, i) => (
+          <group key={z} position={[-W + 0.11, 0, z]}>
+            {[0.75, 1.35, 1.95].map((y, j) => (
+              <group key={y}>
+                <mesh position={[0.2, y, 0]}>
+                  <boxGeometry args={[0.4, 0.04, 2.6]} />
+                  <meshStandardMaterial
+                    color="#2b2e34"
+                    roughness={0.7}
+                    metalness={0.4}
+                  />
+                </mesh>
+                <mesh
+                  position={[0.22, y + 0.24, 0]}
+                  rotation={[0, Math.PI / 2, 0]}
+                >
+                  <planeGeometry args={[2.5, 0.44]} />
+                  <meshStandardMaterial
+                    map={(i + j) % 2 ? tex.bottles : tex.bottles2}
+                    roughness={0.5}
+                    transparent
+                  />
+                </mesh>
+              </group>
+            ))}
+            <mesh position={[0.2, 1.3, -1.32]}>
+              <boxGeometry args={[0.42, 2.6, 0.04]} />
+              <meshStandardMaterial
+                color="#2b2e34"
+                roughness={0.7}
+                metalness={0.4}
+              />
+            </mesh>
+            <mesh position={[0.2, 1.3, 1.32]}>
+              <boxGeometry args={[0.42, 2.6, 0.04]} />
+              <meshStandardMaterial
+                color="#2b2e34"
+                roughness={0.7}
+                metalness={0.4}
+              />
+            </mesh>
+          </group>
+        ))}
 
-      {/* The two-post lift: posts either side, arms swung under the sills. */}
-      {[-1, 1].map((sx) => (
-        <group key={sx}>
-          <mesh position={[sx * (CAR.width / 2 + 1.5), 1.4, 0]} castShadow>
-            <boxGeometry args={[0.24, 2.8, 0.34]} />
-            <meshStandardMaterial
-              color="#2a3b8f"
-              roughness={0.55}
-              metalness={0.3}
-            />
+        {/* Right wall: the tool slatwall, a cabinet and a trolley. */}
+        <mesh position={[W - 0.11, 1.75, -2.4]} rotation={[0, -Math.PI / 2, 0]}>
+          <planeGeometry args={[3.6, 1.8]} />
+          <meshStandardMaterial map={tex.tools} roughness={0.7} />
+        </mesh>
+        <mesh position={[W - 0.5, 0.5, 1.6]} castShadow>
+          <boxGeometry args={[0.7, 1.0, 1.4]} />
+          <meshStandardMaterial
+            color="#c8102e"
+            roughness={0.45}
+            metalness={0.5}
+          />
+        </mesh>
+        <mesh position={[W - 0.5, 0.42, 4.2]} castShadow>
+          <boxGeometry args={[0.6, 0.84, 0.9]} />
+          <meshStandardMaterial color="#2b2e34" roughness={0.6} metalness={0.5} />
+        </mesh>
+
+        {/* The front: wall either side of the door, the shutter drum above it, the shutter up. */}
+        {[-1, 1].map((sx) => (
+          <mesh key={sx} position={[sx * (W / 2 + 1.55), H / 2, BAY.shutterZ]}>
+            <boxGeometry args={[W - 3.1, H, 0.3]} />
+            <meshStandardMaterial map={tex.wall} roughness={0.92} />
           </mesh>
-          <mesh position={[sx * (CAR.width / 2 + 1.5), 0.12, 0]}>
-            <boxGeometry args={[0.6, 0.24, 0.9]} />
-            <meshStandardMaterial
-              color="#1f2a66"
-              roughness={0.6}
-              metalness={0.3}
-            />
-          </mesh>
-        </group>
-      ))}
-      <LimeMarker />
+        ))}
+        <mesh position={[0, H - 0.25, BAY.shutterZ]}>
+          <boxGeometry args={[6.4, 0.5, 0.5]} />
+          <meshStandardMaterial color="#8d939a" roughness={0.5} metalness={0.5} />
+        </mesh>
+        <mesh position={[0, H - 0.75, BAY.shutterZ]}>
+          <planeGeometry args={[6.2, 0.5]} />
+          <meshStandardMaterial
+            map={tex.shutter}
+            roughness={0.5}
+            metalness={0.5}
+            side={2}
+          />
+        </mesh>
+
+        {/* What is on the walls: the badge chart, the enamel signs and the product boards. */}
+        <Decor mobile={mobile} />
+
+        {/* Everything beyond the shutter: the forecourt, the town, the sky, the rain. */}
+        <Exterior mobile={mobile} />
+
+        {/* The two-post lift: posts either side, arms swung under the sills. */}
+        {[-1, 1].map((sx) => (
+          <group key={sx}>
+            <mesh position={[sx * (CAR.width / 2 + 1.5), 1.4, 0]} castShadow>
+              <boxGeometry args={[0.24, 2.8, 0.34]} />
+              <meshStandardMaterial
+                color="#2a3b8f"
+                roughness={0.55}
+                metalness={0.3}
+              />
+            </mesh>
+            <mesh position={[sx * (CAR.width / 2 + 1.5), 0.12, 0]}>
+              <boxGeometry args={[0.6, 0.24, 0.9]} />
+              <meshStandardMaterial
+                color="#1f2a66"
+                roughness={0.6}
+                metalness={0.3}
+              />
+            </mesh>
+          </group>
+        ))}
+        <LimeMarker />
       </Batched>
 
       <CarShadow frame={carFrame} driveFromZ={DRIVE_FROM_Z} />

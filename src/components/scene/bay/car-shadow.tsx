@@ -54,7 +54,7 @@ function paintShadow() {
   c.height = 256;
   const g = c.getContext("2d");
   if (g) {
-    const stretch = (c.height / c.width) * (CAR.length / L) / (CAR.width / W);
+    const stretch = ((c.height / c.width) * (CAR.length / L)) / (CAR.width / W);
     g.save();
     g.translate(c.width / 2, c.height / 2);
     g.scale(1, stretch);

@@ -52,6 +52,14 @@ pure function of scroll progress. The camera rig, scroll driver, captions and in
 (`src/components/watch/`), so no other page downloads three.js, the car or the textures.
 `/process` redirects to `/watch?view=plain`.
 
+Keeping the bay fast (about 300 draw calls a frame, and nothing compiles once it has
+revealed): static scenery goes inside `<Batched>`, which merges it by material; a light is
+never hidden or added after mount, only dimmed, or every material in the scene recompiles;
+anything that appears later in the scroll is mounted from the start, hidden, so `Warmup`
+compiles it behind the preloader; and no refracting (transmission) materials, which make
+the renderer draw the whole scene twice. In development `window.__jd.stats()` reports draw
+calls, triangles and compiled programs per frame.
+
 ## Verification tooling
 
 Headless Chrome via `playwright-core` and the locally installed Chrome:

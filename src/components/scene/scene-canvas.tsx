@@ -20,6 +20,8 @@ import { ScrollDriver, scrollToProgress } from "./scroll-driver";
 
 /** Highest render resolution, in device pixels per CSS pixel. Past it the post effects cost more than they show. */
 const MAX_DPR = { desktop: 1.5, mobile: 1.25 } as const;
+/** How long the canvas waits on the warm-up before drawing regardless. */
+const WARMUP_FALLBACK_MS = 15000;
 
 /**
  * The scene's canvas. It mounts with the 3D view of /watch and unmounts when the visitor
@@ -31,6 +33,7 @@ export function SceneCanvas() {
   const setMode = useScene((s) => s.setMode);
   const setActive = useScene((s) => s.setActive);
   const mode = useScene((s) => s.mode);
+  const compiled = useScene((s) => s.compiled);
   const [support, setSupport] = useState<ReturnType<typeof detectSceneSupport> | null>(null);
   const [dpr, setDpr] = useState(1);
 
@@ -41,9 +44,12 @@ export function SceneCanvas() {
     setSupport(s);
     setDpr(Math.min(window.devicePixelRatio || 1, s.coarsePointer ? MAX_DPR.mobile : MAX_DPR.desktop));
     setActive(s.ok);
+    // Should the warm-up never report (the car failing to load), draw anyway.
+    const fallback = window.setTimeout(() => useScene.getState().setCompiled(true), WARMUP_FALLBACK_MS);
     return () => {
+      window.clearTimeout(fallback);
       resetWarm();
-      useScene.setState({ active: false, ready: false, world: null, progress: 0, entering: false });
+      useScene.setState({ active: false, ready: false, compiled: false, world: null, progress: 0, entering: false });
     };
   }, [setActive]);
 
@@ -68,7 +74,8 @@ export function SceneCanvas() {
           toneMapping: NoToneMapping,
           outputColorSpace: SRGBColorSpace,
         }}
-        frameloop={mode === "off" ? "never" : "always"}
+        // Nothing draws until the shaders are compiled: a frame drawn mid-compile waits for it.
+        frameloop={mode === "off" || !compiled ? "never" : "always"}
         onCreated={({ gl }) => {
           // The error check reads every program's log back synchronously, a stall per shader;
           // the shaders are fixed, so production skips it.
@@ -132,6 +139,8 @@ function StatsProbe() {
           triangles: Math.round(gl.info.render.triangles / n),
           textures: gl.info.memory.textures,
           geometries: gl.info.memory.geometries,
+          // Shader programs compiled so far: should not grow once the preloader has lifted.
+          programs: gl.info.programs?.length ?? 0,
           frames: frames.current,
         };
         gl.info.reset();
