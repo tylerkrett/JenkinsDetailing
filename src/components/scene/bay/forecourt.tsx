@@ -4,9 +4,14 @@ import { useEffect, useMemo } from "react";
 import { Color, DoubleSide } from "three";
 
 import { BAY } from "~/lib/scene/bay-layout";
+import { gableShape } from "~/lib/scene/bay-shapes";
+
+import { Catamaran } from "./catamaran";
 import {
+  makeDoorTexture,
   makeFoliageTexture,
   makePuddleTexture,
+  makeSashWindowTextures,
   makeSignTexture,
   makeStoneTexture,
 } from "~/lib/scene/bay-textures";
@@ -49,7 +54,7 @@ const TYRES: [number, number, number, number][] = [
   [6.05, 8.0, 5, 0.2],
   [6.75, 7.9, 3, -0.5],
   [10.9, 14.2, 4, 0.9],
-  [17.6, 14.1, 6, 0.1],
+  [21.2, 13.9, 6, 0.1],
   [-6.2, 7.9, 4, 0.6],
 ];
 
@@ -62,6 +67,24 @@ const CONES: [number, number][] = [
   [6.4, 18.1],
   [-4.9, 17.4],
 ];
+
+/**
+ * The terrace carrying the village on to the left of the house, set back behind the
+ * forecourt so it fills the sky rather than crowding the yard. Widths and heights vary
+ * a little, the way a real row does.
+ */
+const COTTAGES: { x: number; w: number; h: number; lit: boolean[] }[] = [
+  { x: -21.6, w: 6.2, h: 5.8, lit: [true, false, true] },
+  { x: -27.9, w: 5.8, h: 6.3, lit: [false, true, false] },
+  { x: -33.9, w: 6.0, h: 5.5, lit: [true, true, false] },
+  { x: -40.2, w: 6.4, h: 6.1, lit: [false, false, true] },
+];
+/** Depth of the terrace, how far its roofs rise, and where it stands along z. */
+const COT_D = 7;
+const COT_RISE = 1.7;
+const COT_Z = 1;
+const COT_PITCH = Math.atan(COT_RISE / (COT_D / 2));
+const COT_SLOPE = Math.hypot(COT_D / 2, COT_RISE);
 
 /**
  * The Cambrian ridge behind the town: [x, z, radius, height, sides]. Kept inside the
@@ -112,7 +135,21 @@ export function Forecourt({ mobile }: Props) {
       fg: "#f1e6c8",
       font: "bold 44px Archivo, Arial, sans-serif",
     });
-    return { wall, hedge, canopy, puddle: makePuddleTexture(42), aboard, hours };
+    const on = makeSashWindowTextures(true, 71);
+    const off = makeSashWindowTextures(false, 73);
+    return {
+      wall,
+      hedge,
+      canopy,
+      puddle: makePuddleTexture(42),
+      aboard,
+      hours,
+      winOn: on.map,
+      winOnGlow: on.glow,
+      winOff: off.map,
+      winOffGlow: off.glow,
+      door: makeDoorTexture("#5a1d24"),
+    };
   }, []);
   useEffect(() => () => Object.values(tex).forEach((t) => t.dispose()), [tex]);
 
@@ -132,6 +169,9 @@ export function Forecourt({ mobile }: Props) {
     return out;
   }, []);
 
+  // One gable per cottage: each is a different height, so each needs its own triangle.
+  const cotGables = useMemo(() => COTTAGES.map((c) => gableShape(COT_D / 2, c.h, c.h + COT_RISE)), []);
+
   // Trees to the sides and behind, the same dark clusters as the pair by the church.
   const trees = useMemo(
     () =>
@@ -139,9 +179,14 @@ export function Forecourt({ mobile }: Props) {
         [
           [26, Z - 9, 1.15],
           [33, Z - 3, 0.9],
-          [-21, Z - 6, 1.05],
-          [-31, Z + 6, 0.8],
           [40, Z - 16, 1.3],
+          // Down the left. Kept well forward of the terrace, along the boundary, so they
+          // break the sky beside the cottages instead of screening them.
+          [-17, Z + 10, 1.0],
+          [-26, Z + 11, 1.2],
+          [-34, Z + 9, 0.9],
+          [-43, Z - 3, 1.15],
+          [-48, Z + 3, 1.3],
         ] as [number, number, number][]
       ).map(([x, z, s], i) => ({ x, z, s, key: i })),
     [],
@@ -253,10 +298,10 @@ export function Forecourt({ mobile }: Props) {
       {/* Oil drums against the side building's right pier, clear of the bay mouth. */}
       {(
         [
-          [19.7, 14.2, false],
-          [20.3, 14.7, false],
-          [19.6, 15.1, false],
-          [21.0, 14.1, true],
+          [21.4, 16.6, false],
+          [21.9, 17.1, false],
+          [21.2, 17.5, false],
+          [22.6, 16.5, true],
         ] as [number, number, boolean][]
       ).map(([x, z, down], i) => (
         <mesh
@@ -326,6 +371,9 @@ export function Forecourt({ mobile }: Props) {
           </mesh>
         </group>
       ))}
+
+      {/* A catamaran up on her cradle, washed down over the drive in. */}
+      <Catamaran mobile={mobile} />
 
       {/* The A-board by the entrance, angled at whoever is coming in. */}
       <group position={[7.4, 0, FENCE_Z - 1.2]} rotation={[0, -0.5, 0]}>
@@ -445,6 +493,84 @@ export function Forecourt({ mobile }: Props) {
         </mesh>
       </group>
 
+      {/* The pump island down the left of the yard: a kerb, two pumps back to back and
+          the bollards that keep cars off the ends. Rose Garage still sells fuel. */}
+      <group position={[-12.5, 0, Z + 9]}>
+        <mesh position={[0, 0.09, 0]}>
+          <boxGeometry args={[1.5, 0.18, 5.0]} />
+          <meshStandardMaterial color="#6a6c70" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 0.19, 0]}>
+          <boxGeometry args={[1.1, 0.04, 4.6]} />
+          <meshStandardMaterial color="#8a8d92" roughness={0.85} />
+        </mesh>
+        {[-1.25, 1.25].map((oz) => (
+          <group key={oz} position={[0, 0.18, oz]}>
+            {/* The cabinet: two painted sections with the grey service band between
+                them, the way the pumps on the real forecourt are built. */}
+            {[-0.3, 0.3].map((oz2) => (
+              <mesh key={oz2} position={[0, 0.75, oz2]}>
+                <boxGeometry args={[0.62, 1.5, 0.34]} />
+                <meshStandardMaterial color="#e6e3da" roughness={0.5} />
+              </mesh>
+            ))}
+            <mesh position={[0, 0.75, 0]}>
+              <boxGeometry args={[0.64, 1.5, 0.28]} />
+              <meshStandardMaterial color="#585c62" roughness={0.6} metalness={0.2} />
+            </mesh>
+            {/* The head, its meters, and the capping over it. */}
+            <mesh position={[0, 1.64, 0]}>
+              <boxGeometry args={[0.68, 0.3, 1.0]} />
+              <meshStandardMaterial color="#3c4046" roughness={0.55} metalness={0.25} />
+            </mesh>
+            {[-1, 1].map((sx) => (
+              <group key={sx} position={[sx * 0.35, 1.64, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
+                <mesh position={[0, 0, 0.005]}>
+                  <planeGeometry args={[0.52, 0.2]} />
+                  <meshStandardMaterial color="#15171b" roughness={0.4} />
+                </mesh>
+                <mesh position={[0.08, 0.01, 0.012]}>
+                  <planeGeometry args={[0.26, 0.09]} />
+                  <meshBasicMaterial color="#69c496" toneMapped={false} />
+                </mesh>
+              </group>
+            ))}
+            <mesh position={[0, 1.84, 0]}>
+              <boxGeometry args={[0.66, 0.1, 0.98]} />
+              <meshStandardMaterial color="#e6e3da" roughness={0.5} />
+            </mesh>
+            <mesh position={[0, 1.93, 0.14]}>
+              <boxGeometry args={[0.3, 0.08, 0.3]} />
+              <meshStandardMaterial color="#c8102e" roughness={0.5} />
+            </mesh>
+            {/* A nozzle in its holster each side, hose looping down the cabinet. */}
+            {[-1, 1].map((sx) => (
+              <group key={sx} position={[sx * 0.36, 0, 0.22]}>
+                <mesh position={[0, 1.02, 0]}>
+                  <boxGeometry args={[0.1, 0.24, 0.11]} />
+                  <meshStandardMaterial color="#d8b21e" roughness={0.5} metalness={0.3} />
+                </mesh>
+                <mesh position={[-0.02, 0.79, -0.02]}>
+                  <cylinderGeometry args={[0.03, 0.03, 0.34, 6]} />
+                  <meshStandardMaterial color="#14161a" roughness={0.9} />
+                </mesh>
+                <mesh position={[-0.02, 0.6, -0.02]} rotation={[Math.PI / 2, 0, 0]}>
+                  <torusGeometry args={[0.1, 0.03, 5, 10]} />
+                  <meshStandardMaterial color="#14161a" roughness={0.9} />
+                </mesh>
+              </group>
+            ))}
+          </group>
+        ))}
+        {[-2.3, 2.3].map((oz) => (
+          <mesh key={oz} position={[0, 0.55, oz]}>
+            <cylinderGeometry args={[0.09, 0.11, 0.96, 8]} />
+            <meshStandardMaterial color="#1a1c22" roughness={0.6} metalness={0.4} />
+          </mesh>
+        ))}
+        <pointLight color={SODIUM} intensity={7} distance={9} decay={2} position={[0, 2.3, 0]} />
+      </group>
+
       {/* ---- The boundary the yard sits in. ---- */}
       {/* A stone wall carrying on from the railings to the right, with its coping. */}
       <group position={[26, 0, FENCE_Z]}>
@@ -458,13 +584,13 @@ export function Forecourt({ mobile }: Props) {
         </mesh>
       </group>
       {/* And to the left, past the house. */}
-      <group position={[-27, 0, Z + 5]} rotation={[0, Math.PI / 2, 0]}>
+      <group position={[-27, 0, Z + 6]} rotation={[0, Math.PI / 2, 0]}>
         <mesh position={[0, 0.55, 0]}>
-          <boxGeometry args={[16, 1.1, 0.5]} />
+          <boxGeometry args={[14, 1.1, 0.5]} />
           <meshStandardMaterial map={tex.wall} roughness={1} />
         </mesh>
         <mesh position={[0, 1.14, 0]}>
-          <boxGeometry args={[16.2, 0.12, 0.62]} />
+          <boxGeometry args={[14.2, 0.12, 0.62]} />
           <meshStandardMaterial color="#6b6a63" roughness={0.95} />
         </mesh>
       </group>
@@ -501,6 +627,79 @@ export function Forecourt({ mobile }: Props) {
           </mesh>
         ))}
       </group>
+
+      {/* The terrace of cottages carrying the village on past the house. */}
+      {COTTAGES.map((c, i) => (
+        <group key={c.x} position={[c.x, 0, COT_Z]}>
+          <mesh position={[0, c.h / 2, 0]}>
+            <boxGeometry args={[c.w, c.h, COT_D]} />
+            <meshStandardMaterial map={tex.wall} roughness={1} />
+          </mesh>
+          {[-1, 1].map((sz) => (
+            <mesh key={sz} position={[0, c.h + COT_RISE / 2, (sz * COT_D) / 4]} rotation={[sz * COT_PITCH, 0, 0]}>
+              <boxGeometry args={[c.w + 0.36, 0.14, COT_SLOPE + 0.3]} />
+              <meshStandardMaterial color="#23272e" roughness={0.78} />
+            </mesh>
+          ))}
+          <mesh position={[0, c.h + COT_RISE, 0]}>
+            <boxGeometry args={[c.w + 0.44, 0.15, 0.3]} />
+            <meshStandardMaterial color="#2c3038" roughness={0.82} />
+          </mesh>
+          {[-1, 1].map((sx) => (
+            <mesh key={sx} position={[(sx * c.w) / 2, 0, 0]} rotation={[0, (sx * Math.PI) / 2, 0]}>
+              <shapeGeometry args={[cotGables[i]!]} />
+              <meshStandardMaterial map={tex.wall} roughness={1} side={DoubleSide} />
+            </mesh>
+          ))}
+          <mesh position={[c.w / 2 - 0.7, c.h + COT_RISE + 0.5, 0]}>
+            <boxGeometry args={[0.7, 1.5, 0.7]} />
+            <meshStandardMaterial map={tex.wall} roughness={1} />
+          </mesh>
+          {/* Windows over the door, and the door itself, on the side facing the yard. */}
+          {c.lit.map((on, j) => (
+            <mesh key={j} position={[(j - 1) * 1.75, j === 1 ? 1.75 : c.h - 1.9, COT_D / 2 + 0.02]}>
+              <planeGeometry args={[1.2, 1.66]} />
+              <meshStandardMaterial
+                map={on ? tex.winOn : tex.winOff}
+                emissiveMap={on ? tex.winOnGlow : tex.winOffGlow}
+                emissive="#ffffff"
+                emissiveIntensity={on ? 0.65 : 0}
+                transparent
+                roughness={0.8}
+              />
+            </mesh>
+          ))}
+          <mesh position={[1.75, 1.15, COT_D / 2 + 0.02]}>
+            <planeGeometry args={[1.05, 2.1]} />
+            <meshStandardMaterial map={tex.door} transparent roughness={0.8} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Two lamps along the terrace frontage, so the row reads as houses at night
+          rather than a dark mass. Only the nearer one carries a real light. */}
+      {(
+        [
+          [-20.5, Z + 5.5, true],
+          [-31.5, Z + 5.5, false],
+        ] as [number, number, boolean][]
+      ).map(([x, z, lit], i) => (
+        <group key={i} position={[x, 0, z]}>
+          <mesh position={[0, 2.5, 0]}>
+            <cylinderGeometry args={[0.06, 0.09, 5.0, 6]} />
+            <meshStandardMaterial color="#2f3238" roughness={0.6} metalness={0.6} />
+          </mesh>
+          <mesh position={[0.42, 5.0, 0]} rotation={[0, 0, -0.32]}>
+            <boxGeometry args={[0.9, 0.08, 0.08]} />
+            <meshStandardMaterial color="#2f3238" roughness={0.6} metalness={0.6} />
+          </mesh>
+          <mesh position={[0.85, 4.88, 0]}>
+            <boxGeometry args={[0.56, 0.15, 0.26]} />
+            <meshBasicMaterial color={LAMP_HEAD} toneMapped={false} />
+          </mesh>
+          {lit ? <pointLight color={SODIUM} intensity={24} distance={20} decay={2} position={[0.85, 4.65, 0]} /> : null}
+        </group>
+      ))}
 
       {/* Trees to fill the sides and break the sky. */}
       {trees.map(({ x, z, s, key }) => (
@@ -544,7 +743,7 @@ export function Forecourt({ mobile }: Props) {
       ))}
 
       {/* One tall lamp standard over the middle of the yard, as every forecourt has. */}
-      <group position={[11.6, 0, FENCE_Z - 2.2]}>
+      <group position={[9.9, 0, FENCE_Z - 1.5]}>
         <mesh position={[0, 3.1, 0]}>
           <cylinderGeometry args={[0.07, 0.11, 6.2, 8]} />
           <meshStandardMaterial color="#2f3238" roughness={0.6} metalness={0.6} />

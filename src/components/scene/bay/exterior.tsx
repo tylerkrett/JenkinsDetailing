@@ -9,17 +9,19 @@ import {
   Color,
   Float32BufferAttribute,
   type Points,
-  Shape,
   ShaderMaterial,
 } from "three";
 
 import { BAY } from "~/lib/scene/bay-layout";
+import { gableShape } from "~/lib/scene/bay-shapes";
 
 import { Forecourt } from "./forecourt";
 import { Street } from "./street";
 import {
   makeCorrugatedTexture,
+  makeDoorTexture,
   makeRoundelTexture,
+  makeSashWindowTextures,
   makeSignTexture,
   makeForecourtTexture,
   makeSkyTexture,
@@ -46,15 +48,8 @@ const HOUSE_SLOPE = Math.hypot(HOUSE.d / 2, HOUSE.ridge - HOUSE.h);
 /** How high the lift holds the car off the bay floor. */
 const LIFT = 1.15;
 
-/** The gable above the garage front: a triangle from the eaves to the ridge. */
-function gableShape(halfW: number, eaves: number, ridge: number) {
-  const s = new Shape();
-  s.moveTo(-halfW, eaves - 0.02);
-  s.lineTo(halfW, eaves - 0.02);
-  s.lineTo(0, ridge);
-  s.closePath();
-  return s;
-}
+/** How high the corrugated cladding runs up the garage front; white render above it. */
+const CLAD_H = 1.7;
 
 const rainVertex = /* glsl */ `
   attribute vec3 aSeed;
@@ -83,7 +78,7 @@ const rainFragment = /* glsl */ `
 `;
 
 /**
- * Beyond the shutter: Central Garage's forecourt on a wet Welsh evening. The white
+ * Beyond the shutter: Rose Garage's forecourt on a wet Welsh evening. The white
  * gabled front with the JJ roundel and the lettering, the long stone side building
  * under a corrugated roof, the church tower behind, two trees, the green railings, a
  * totem sign, the high street of shops beyond (street.tsx), an overcast sky and light
@@ -97,6 +92,10 @@ export function Exterior({ mobile }: Props) {
     stoneDark.repeat.set(2, 6);
     const corrugated = makeCorrugatedTexture();
     corrugated.repeat.set(10, 1);
+    // Its own instance for the wall: the roof's sits at a different repeat and a Texture
+    // carries the repeat with it.
+    const cladding = makeCorrugatedTexture(9);
+    cladding.repeat.set(3, 1);
     const tarmac = makeForecourtTexture();
     tarmac.repeat.set(7, 2);
     const house = makeStoneTexture(21);
@@ -105,12 +104,19 @@ export function Exterior({ mobile }: Props) {
       stone,
       stoneDark,
       corrugated,
+      cladding,
       tarmac,
       house,
       roundel: makeRoundelTexture(),
-      lettering: makeSignTexture("CENTRAL GARAGE", { width: 1024, height: 160, bg: "#f4f1ea", fg: "#1c1f2a" }),
+      lettering: makeSignTexture("ROSE GARAGE", { width: 1024, height: 160, bg: "#f4f1ea", fg: "#1c1f2a" }),
       totem: makeTotemTexture(),
       sky: makeSkyTexture(),
+      ...(() => {
+        const on = makeSashWindowTextures(true, 61);
+        const off = makeSashWindowTextures(false, 67);
+        return { winOn: on.map, winOnGlow: on.glow, winOff: off.map, winOffGlow: off.glow };
+      })(),
+      door: makeDoorTexture("#1f3d2b"),
     };
   }, []);
   useEffect(() => () => Object.values(tex).forEach((t) => t.dispose()), [tex]);
@@ -187,12 +193,25 @@ export function Exterior({ mobile }: Props) {
         <shapeGeometry args={[gable]} />
         <meshStandardMaterial color="#efece4" roughness={0.9} side={2} />
       </mesh>
-      {/* The render skin over the blockwork either side of the door, outside. */}
+      {/* The skin over the blockwork either side of the door: corrugated sheet up to the
+          dado with a drip trim over it, white render above, the way the unit is clad. The
+          sheet is barely metallic and takes almost no environment — the bay's Environment
+          is a bright white interior and a shiny outdoor surface mirrors it white. */}
       {[-1, 1].map((sx) => (
-        <mesh key={sx} position={[sx * 4.55, (BAY.height + 0.3) / 2, Z + 0.18]}>
-          <planeGeometry args={[4.1, BAY.height + 0.3]} />
-          <meshStandardMaterial color="#efece4" roughness={0.9} />
-        </mesh>
+        <group key={sx} position={[sx * 4.55, 0, 0]}>
+          <mesh position={[0, CLAD_H / 2, Z + 0.21]}>
+            <planeGeometry args={[4.1, CLAD_H]} />
+            <meshStandardMaterial map={tex.cladding} roughness={0.66} metalness={0.25} envMapIntensity={0.08} />
+          </mesh>
+          <mesh position={[0, CLAD_H, Z + 0.24]}>
+            <boxGeometry args={[4.14, 0.09, 0.07]} />
+            <meshStandardMaterial color="#6d7278" roughness={0.6} metalness={0.35} envMapIntensity={0.08} />
+          </mesh>
+          <mesh position={[0, (CLAD_H + BAY.height + 0.3) / 2, Z + 0.18]}>
+            <planeGeometry args={[4.1, BAY.height + 0.3 - CLAD_H]} />
+            <meshStandardMaterial color="#efece4" roughness={0.9} />
+          </mesh>
+        </group>
       ))}
       {/* Bargeboards and the eaves line. */}
       <mesh position={[0, BAY.height + 0.3, Z + 0.36]}>
@@ -509,20 +528,27 @@ export function Exterior({ mobile }: Props) {
           </mesh>
         ))}
         {[
-          [-2.6, 1.5, true],
-          [0.4, 1.5, false],
-          [-2.6, 4.4, true],
-          [0.4, 4.4, true],
-          [2.9, 4.4, false],
+          [-2.6, 1.7, true],
+          [0.4, 1.7, false],
+          [-2.6, 4.6, true],
+          [0.4, 4.6, true],
+          [2.9, 4.6, false],
         ].map(([x, y, lit], i) => (
           <mesh key={i} position={[x as number, y as number, 4.27]}>
-            <planeGeometry args={[1.0, 1.4]} />
-            <meshBasicMaterial color={lit ? "#ffd9a0" : "#0a0c12"} />
+            <planeGeometry args={[1.3, 1.8]} />
+            <meshStandardMaterial
+              map={lit ? tex.winOn : tex.winOff}
+              emissiveMap={lit ? tex.winOnGlow : tex.winOffGlow}
+              emissive="#ffffff"
+              emissiveIntensity={lit ? 0.65 : 0}
+              transparent
+              roughness={0.8}
+            />
           </mesh>
         ))}
-        <mesh position={[2.9, 1.1, 4.27]}>
-          <planeGeometry args={[0.95, 2.1]} />
-          <meshStandardMaterial color="#1f3d2b" roughness={0.8} />
+        <mesh position={[2.9, 1.25, 4.27]}>
+          <planeGeometry args={[1.15, 2.3]} />
+          <meshStandardMaterial map={tex.door} transparent roughness={0.8} />
         </mesh>
       </group>
 

@@ -1,4 +1,10 @@
-import { CanvasTexture, Color, RepeatWrapping, SRGBColorSpace, type Texture } from "three";
+import {
+  CanvasTexture,
+  Color,
+  RepeatWrapping,
+  SRGBColorSpace,
+  type Texture,
+} from "three";
 
 /**
  * Runtime canvas textures for the unit and the forecourt. Nothing is fetched: every
@@ -6,7 +12,7 @@ import { CanvasTexture, Color, RepeatWrapping, SRGBColorSpace, type Texture } fr
  * them identical every visit.
  */
 
-function rng(seed: number) {
+export function rng(seed: number) {
   let s = seed >>> 0 || 1;
   return () => {
     s ^= s << 13;
@@ -16,14 +22,14 @@ function rng(seed: number) {
   };
 }
 
-function canvas(size: number, h = size) {
+export function canvas(size: number, h = size) {
   const c = document.createElement("canvas");
   c.width = size;
   c.height = h;
   return { c, g: c.getContext("2d")! };
 }
 
-function texture(c: HTMLCanvasElement, repeat = true, srgb = true) {
+export function texture(c: HTMLCanvasElement, repeat = true, srgb = true) {
   const t = new CanvasTexture(c);
   if (repeat) t.wrapS = t.wrapT = RepeatWrapping;
   t.flipY = true;
@@ -39,7 +45,12 @@ export const LIME = "#c3d93c";
  * pattern, or the light yellow-green of the client's unit. `cells` tiles per texture
  * edge; the caller repeats it. `band` returns true for cells that are green.
  */
-export function makeTileTexture(cellsX: number, cellsY: number, band: (x: number, y: number) => boolean, seed = 1): Texture {
+export function makeTileTexture(
+  cellsX: number,
+  cellsY: number,
+  band: (x: number, y: number) => boolean,
+  seed = 1,
+): Texture {
   const px = 48;
   const { c, g } = canvas(cellsX * px, cellsY * px);
   const r = rng(seed);
@@ -169,14 +180,25 @@ export function makeShutterTexture(): Texture {
 }
 
 /** A signboard with bold text: white board, dark letters, e.g. the CARPRO sign. */
-export function makeSignTexture(text: string, opts: { bg?: string; fg?: string; width?: number; height?: number; font?: string } = {}): Texture {
+export function makeSignTexture(
+  text: string,
+  opts: {
+    bg?: string;
+    fg?: string;
+    width?: number;
+    height?: number;
+    font?: string;
+  } = {},
+): Texture {
   const width = opts.width ?? 1024;
   const height = opts.height ?? 256;
   const { c, g } = canvas(width, height);
   g.fillStyle = opts.bg ?? "#f2f3f4";
   g.fillRect(0, 0, width, height);
   g.fillStyle = opts.fg ?? "#111";
-  g.font = opts.font ?? `bold ${Math.round(height * 0.62)}px Archivo, "Helvetica Neue", Arial, sans-serif`;
+  g.font =
+    opts.font ??
+    `bold ${Math.round(height * 0.62)}px Archivo, "Helvetica Neue", Arial, sans-serif`;
   g.textAlign = "center";
   g.textBaseline = "middle";
   g.fillText(text, width / 2, height / 2 + height * 0.02);
@@ -213,7 +235,17 @@ export function makeBottlesTexture(seed = 5): Texture {
   const r = rng(seed);
   g.fillStyle = "#23262b";
   g.fillRect(0, 0, 1024, 256);
-  const colours = ["#e63946", "#1d7fdc", "#f4d35e", "#2ec4b6", "#ffffff", "#ff7f11", "#8338ec", LIME, "#111111"];
+  const colours = [
+    "#e63946",
+    "#1d7fdc",
+    "#f4d35e",
+    "#2ec4b6",
+    "#ffffff",
+    "#ff7f11",
+    "#8338ec",
+    LIME,
+    "#111111",
+  ];
   let x = 6;
   while (x < 1010) {
     const w = 26 + r() * 30;
@@ -246,7 +278,14 @@ export function makeToolWallTexture(seed = 6): Texture {
     g.lineTo(1024, y);
     g.stroke();
   }
-  const tools = ["#d0d3d8", "#b5b8bd", "#e63946", "#1d7fdc", "#f4d35e", "#8f9399"];
+  const tools = [
+    "#d0d3d8",
+    "#b5b8bd",
+    "#e63946",
+    "#1d7fdc",
+    "#f4d35e",
+    "#8f9399",
+  ];
   for (let i = 0; i < 26; i++) {
     const x = 20 + r() * 980;
     const y = 30 + Math.floor(r() * 4) * 96 + 24;
@@ -336,7 +375,12 @@ export function makeRoadTexture(seed = 8): Texture {
   }
   // Tyre tracks: two darker bands in each lane, polished a little.
   for (const x of [-3.0, -1.7, 1.7, 3.0]) {
-    const grad = g.createLinearGradient((x - 0.35 + 4.5) * px, 0, (x + 0.35 + 4.5) * px, 0);
+    const grad = g.createLinearGradient(
+      (x - 0.35 + 4.5) * px,
+      0,
+      (x + 0.35 + 4.5) * px,
+      0,
+    );
     grad.addColorStop(0, "rgba(0,0,0,0)");
     grad.addColorStop(0.5, "rgba(0,0,0,0.28)");
     grad.addColorStop(1, "rgba(0,0,0,0)");
@@ -368,12 +412,25 @@ export function makePavingTexture(seed = 9): Texture {
       for (let i = 0; i < 40; i++) {
         const s = 60 + r() * 50;
         g.fillStyle = `rgba(${s},${s},${s},0.5)`;
-        g.fillRect(x * cell + 2 + r() * (cell - 4), y * cell + 2 + r() * (cell - 4), 1.5, 1.5);
+        g.fillRect(
+          x * cell + 2 + r() * (cell - 4),
+          y * cell + 2 + r() * (cell - 4),
+          1.5,
+          1.5,
+        );
       }
       if (r() < 0.25) {
         g.fillStyle = "rgba(0,0,0,0.18)";
         g.beginPath();
-        g.ellipse(x * cell + r() * cell, y * cell + r() * cell, 10 + r() * 14, 6 + r() * 10, r() * 3, 0, Math.PI * 2);
+        g.ellipse(
+          x * cell + r() * cell,
+          y * cell + r() * cell,
+          10 + r() * 14,
+          6 + r() * 10,
+          r() * 3,
+          0,
+          Math.PI * 2,
+        );
         g.fill();
       }
     }
@@ -408,7 +465,10 @@ export const SHOP_HEIGHT = 7.2;
  * fascia, rendered or stone upper floor with sash windows, eaves and a downpipe. Returns
  * the colour map and an emissive map of just the lit glass.
  */
-export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Texture } {
+export function makeShopfrontTextures(spec: ShopSpec): {
+  map: Texture;
+  glow: Texture;
+} {
   const W = 512;
   const H = 640;
   const { c, g } = canvas(W, H);
@@ -417,7 +477,14 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
   const sx = W / spec.width;
   const sy = H / SHOP_HEIGHT;
   /** A rectangle in metres from the ground up. */
-  const rect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string | CanvasGradient) => {
+  const rect = (
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    fill: string | CanvasGradient,
+  ) => {
     ctx.fillStyle = fill;
     ctx.fillRect(x * sx, H - (y + h) * sy, w * sx, h * sy);
   };
@@ -451,7 +518,10 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
     g.fillRect(0, 0, W, H);
     for (let i = 0; i < 2500; i++) {
       const a = r();
-      g.fillStyle = a < 0.5 ? `rgba(0,0,0,${0.03 + r() * 0.06})` : `rgba(255,255,255,${0.02 + r() * 0.05})`;
+      g.fillStyle =
+        a < 0.5
+          ? `rgba(0,0,0,${0.03 + r() * 0.06})`
+          : `rgba(255,255,255,${0.02 + r() * 0.05})`;
       g.fillRect(r() * W, r() * H, 1 + r() * 3, 1 + r() * 3);
     }
   }
@@ -480,7 +550,12 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
     rect(g, x - 0.06, y, winW + 0.12, winH + 0.08, "#e9e6df"); // frame
     const lit = spec.lit[i] ?? false;
     if (lit) {
-      const grad = g.createLinearGradient(0, H - (y + winH) * sy, 0, H - y * sy);
+      const grad = g.createLinearGradient(
+        0,
+        H - (y + winH) * sy,
+        0,
+        H - y * sy,
+      );
       grad.addColorStop(0, "#ffd79a");
       grad.addColorStop(1, "#f0b25c");
       rect(g, x, y, winW, winH, grad);
@@ -490,7 +565,14 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
       rect(gg, x, y, winW * 0.35, winH, "#3a1a12");
     } else {
       rect(g, x, y, winW, winH, "#161c28");
-      rect(g, x + 0.1, y + 0.2, winW * 0.35, winH * 0.6, "rgba(120,140,170,0.16)");
+      rect(
+        g,
+        x + 0.1,
+        y + 0.2,
+        winW * 0.35,
+        winH * 0.6,
+        "rgba(120,140,170,0.16)",
+      );
       rect(gg, x, y, winW, winH, "#0a0f18");
     }
     rect(g, x + winW / 2 - 0.02, y, 0.04, winH, "#e9e6df");
@@ -523,7 +605,14 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
         const gw = 0.12 + r() * 0.25;
         const gh = 0.15 + r() * 0.3;
         const hue = Math.floor(r() * 360);
-        rect(g, gx, y + 0.05, gw, gh, `hsla(${hue},45%,${28 + r() * 20}%,0.85)`);
+        rect(
+          g,
+          gx,
+          y + 0.05,
+          gw,
+          gh,
+          `hsla(${hue},45%,${28 + r() * 20}%,0.85)`,
+        );
         gx += gw + 0.06 + r() * 0.12;
       }
     }
@@ -545,10 +634,19 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
     glow.addColorStop(0, "#ffd9a6");
     glow.addColorStop(1, "#c77d33");
     rect(gg, winX, 0.65, winWidth, 1.9, glow);
-    for (let s = 0; s < 3; s++) rect(gg, winX + 0.15, 0.85 + s * 0.55, winWidth - 0.3, 0.05, "rgba(0,0,0,0.5)");
+    for (let s = 0; s < 3; s++)
+      rect(
+        gg,
+        winX + 0.15,
+        0.85 + s * 0.55,
+        winWidth - 0.3,
+        0.05,
+        "rgba(0,0,0,0.5)",
+      );
   } else {
     rect(g, winX, 0.65, winWidth, 1.9, "#1a2230");
-    for (let s = 0; s < 14; s++) rect(g, winX, 0.7 + s * 0.13, winWidth, 0.06, "rgba(200,190,170,0.16)");
+    for (let s = 0; s < 14; s++)
+      rect(g, winX, 0.7 + s * 0.13, winWidth, 0.06, "rgba(200,190,170,0.16)");
     rect(gg, winX, 0.65, winWidth, 1.9, "#101620");
   }
   // Glazing bars.
@@ -556,8 +654,22 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
   // The door: panelled below, glass above, a lit fanlight.
   rect(g, doorX, 0.05, doorW, 2.5, spec.frame);
   rect(g, doorX + 0.08, 0.15, doorW - 0.16, 0.9, "rgba(0,0,0,0.25)");
-  rect(g, doorX + 0.08, 1.2, doorW - 0.16, 1.2, spec.open ? "#f2c07a" : "#151c28");
-  rect(gg, doorX + 0.08, 1.2, doorW - 0.16, 1.2, spec.open ? "#d99a4a" : "#0a0f18");
+  rect(
+    g,
+    doorX + 0.08,
+    1.2,
+    doorW - 0.16,
+    1.2,
+    spec.open ? "#f2c07a" : "#151c28",
+  );
+  rect(
+    gg,
+    doorX + 0.08,
+    1.2,
+    doorW - 0.16,
+    1.2,
+    spec.open ? "#d99a4a" : "#0a0f18",
+  );
   rect(g, doorX + doorW - 0.2, 1.05, 0.05, 0.12, "#d9c26a");
   // Fascia with the name.
   rect(g, 0.1, 2.68, w - 0.2, 0.62, spec.frame);
@@ -566,9 +678,16 @@ export function makeShopfrontTextures(spec: ShopSpec): { map: Texture; glow: Tex
   g.fillStyle = spec.letter;
   g.textAlign = "center";
   g.textBaseline = "middle";
-  const size = Math.min(0.36 * sy, ((w - 0.8) * sx) / Math.max(6, spec.name.length) / 0.62);
+  const size = Math.min(
+    0.36 * sy,
+    ((w - 0.8) * sx) / Math.max(6, spec.name.length) / 0.62,
+  );
   g.font = `bold ${Math.round(size)}px Archivo, "Helvetica Neue", Arial, sans-serif`;
-  g.fillText(spec.name.toUpperCase(), (w / 2) * sx, H - (spec.sub ? 3.08 : 2.99) * sy);
+  g.fillText(
+    spec.name.toUpperCase(),
+    (w / 2) * sx,
+    H - (spec.sub ? 3.08 : 2.99) * sy,
+  );
   if (spec.sub) {
     g.font = `${Math.round(0.14 * sy)}px Figtree, Arial, sans-serif`;
     g.fillText(spec.sub, (w / 2) * sx, H - 2.82 * sy);
@@ -655,7 +774,14 @@ export function makeFoliageTexture(seed = 43): Texture {
   g.fillRect(0, 0, 256, 256);
   for (let i = 0; i < 2600; i++) {
     const v = r();
-    const hue = v < 0.18 ? "#2f4a1e" : v < 0.45 ? "#233a17" : v < 0.8 ? "#182a10" : "#0d1a09";
+    const hue =
+      v < 0.18
+        ? "#2f4a1e"
+        : v < 0.45
+          ? "#233a17"
+          : v < 0.8
+            ? "#182a10"
+            : "#0d1a09";
     g.fillStyle = hue;
     const s = 3 + r() * 9;
     g.beginPath();
@@ -666,7 +792,13 @@ export function makeFoliageTexture(seed = 43): Texture {
 }
 
 /** The Prince of Wales feathers: three plumes over a coronet, as the totem carries them. */
-function drawFeathers(g: CanvasRenderingContext2D, cx: number, cy: number, h: number, colour: string) {
+function drawFeathers(
+  g: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  h: number,
+  colour: string,
+) {
   const plume = (lean: number, scale: number) => {
     g.save();
     g.translate(cx, cy);
@@ -744,7 +876,7 @@ export function makeTotemTexture(): Texture {
   g.font = 'bold 104px Archivo, "Helvetica Neue", Arial, sans-serif';
   g.fillText("Jenkins", W / 2, 452);
   g.font = '46px Archivo, "Helvetica Neue", Arial, sans-serif';
-  g.fillText("Garej Ganolog", W / 2, 524);
+  g.fillText("Garej Rhosyn", W / 2, 524);
 
   // Three service panels: a coloured header over a dark display.
   const M = 26;
@@ -779,14 +911,16 @@ export function makeTotemTexture(): Texture {
   g.fillStyle = "#ffffff";
   g.textAlign = "center";
   const fit = W - M * 2 - 28;
-  ["SERVICING", "MOT's", "VALETING & DETAILING", "PAINT PROTECTION"].forEach((line, i) => {
-    let size = 42;
-    do {
-      g.font = `bold ${size}px Archivo, "Helvetica Neue", Arial, sans-serif`;
-      size -= 1;
-    } while (g.measureText(line).width > fit && size > 16);
-    g.fillText(line, W / 2, 1358 + i * 64);
-  });
+  ["SERVICING", "MOT's", "VALETING & DETAILING", "PAINT PROTECTION"].forEach(
+    (line, i) => {
+      let size = 42;
+      do {
+        g.font = `bold ${size}px Archivo, "Helvetica Neue", Arial, sans-serif`;
+        size -= 1;
+      } while (g.measureText(line).width > fit && size > 16);
+      g.fillText(line, W / 2, 1358 + i * 64);
+    },
+  );
 
   // Weathering: the board has stood on a wet forecourt for years.
   const r = rng(53);
@@ -794,5 +928,130 @@ export function makeTotemTexture(): Texture {
     g.fillStyle = `rgba(120,118,110,${r() * 0.09})`;
     g.fillRect(r() * W, r() * H, 1 + r() * 3, 8 + r() * 60);
   }
+  return texture(c, false);
+}
+
+/**
+ * A Welsh sash window with its frame: stone lintel over, painted box frame, four panes
+ * to each sash, and a stone sill under it with its drip. Returns the colour map and a
+ * glow map of just the glass, so a lit window throws light without the frame glowing
+ * with it. Everything outside the lintel and sill is left clear for the wall behind.
+ */
+export function makeSashWindowTextures(
+  lit: boolean,
+  seed = 61,
+): { map: Texture; glow: Texture } {
+  const W = 256;
+  const H = 352;
+  const { c, g } = canvas(W, H);
+  const { c: gc, g: gg } = canvas(W, H);
+  const r = rng(seed);
+  gg.fillStyle = "#000000";
+  gg.fillRect(0, 0, W, H);
+
+  // The reveal: a soft shadow around the opening so it sits into the wall.
+  g.fillStyle = "rgba(0,0,0,0.32)";
+  g.fillRect(20, 30, W - 40, 286);
+
+  // Stone lintel over the head, and the sill with its drip under the cill.
+  g.fillStyle = "#7f7c72";
+  g.fillRect(14, 16, W - 28, 26);
+  g.fillStyle = "#8b887d";
+  g.fillRect(14, 16, W - 28, 8);
+  g.fillStyle = "#7f7c72";
+  g.fillRect(6, 298, W - 12, 24);
+  g.fillStyle = "#949186";
+  g.fillRect(6, 298, W - 12, 7);
+  g.fillStyle = "#4f4d47";
+  g.fillRect(10, 322, W - 20, 7);
+
+  // The painted box frame.
+  const fx = 30;
+  const fy = 42;
+  const fw = W - 60;
+  const fh = 256;
+  g.fillStyle = "#ded9cc";
+  g.fillRect(fx, fy, fw, fh);
+  g.fillStyle = "rgba(0,0,0,0.22)";
+  g.fillRect(fx, fy, fw, 3);
+
+  // The glass, then the bars over it. Each pane takes its own shade so the glass is
+  // not one flat block.
+  const gx = fx + 13;
+  const gy = fy + 13;
+  const gw = fw - 26;
+  const gh = fh - 26;
+  const cols = 2;
+  const rows = 4;
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      const px = gx + (i * gw) / cols;
+      const py = gy + (j * gh) / rows;
+      const pw = gw / cols;
+      const ph = gh / rows;
+      if (lit) {
+        const v = 0.82 + r() * 0.18;
+        g.fillStyle = `rgb(${Math.round(255 * v)},${Math.round(217 * v)},${Math.round(160 * v)})`;
+        g.fillRect(px, py, pw, ph);
+        gg.fillStyle = `rgb(${Math.round(255 * v)},${Math.round(214 * v)},${Math.round(150 * v)})`;
+        gg.fillRect(px, py, pw, ph);
+      } else {
+        const v = 0.85 + r() * 0.3;
+        g.fillStyle = `rgb(${Math.round(12 * v)},${Math.round(15 * v)},${Math.round(23 * v)})`;
+        g.fillRect(px, py, pw, ph);
+        // A sliver of sky caught in the top corner of the upper panes.
+        if (j === 0) {
+          g.fillStyle = "rgba(120,140,175,0.16)";
+          g.fillRect(px, py, pw, ph * 0.4);
+        }
+      }
+    }
+  }
+  // Glazing bars, the meeting rail between the sashes, and the frame's inner edge.
+  g.fillStyle = "#ded9cc";
+  g.fillRect(gx + gw / 2 - 3, gy, 6, gh);
+  for (let j = 1; j < rows; j++) {
+    const h = j === rows / 2 ? 10 : 5;
+    g.fillRect(gx, gy + (j * gh) / rows - h / 2, gw, h);
+  }
+  g.strokeStyle = "rgba(0,0,0,0.35)";
+  g.lineWidth = 2;
+  g.strokeRect(gx, gy, gw, gh);
+
+  return { map: texture(c, false), glow: texture(gc, false) };
+}
+
+/** A painted four-panel front door with its step, for the house and the cottages. */
+export function makeDoorTexture(colour = "#1f3d2b"): Texture {
+  const W = 192;
+  const H = 384;
+  const { c, g } = canvas(W, H);
+  g.fillStyle = "rgba(0,0,0,0.3)";
+  g.fillRect(10, 10, W - 20, H - 20);
+  // Frame, then the leaf inside it.
+  g.fillStyle = "#ded9cc";
+  g.fillRect(16, 14, W - 32, H - 30);
+  g.fillStyle = colour;
+  g.fillRect(28, 26, W - 56, H - 54);
+  // Four sunk panels.
+  const panel = (x: number, y: number, w: number, h: number) => {
+    g.fillStyle = "rgba(0,0,0,0.28)";
+    g.fillRect(x, y, w, h);
+    g.fillStyle = colour;
+    g.fillRect(x + 4, y + 4, w - 8, h - 8);
+  };
+  panel(44, 46, 46, 84);
+  panel(102, 46, 46, 84);
+  panel(44, 148, 46, 118);
+  panel(102, 148, 46, 118);
+  // A fanlight over the door, the knocker and the step.
+  g.fillStyle = "#f0d9a8";
+  g.fillRect(34, 30, W - 68, 22);
+  g.fillStyle = "#c9b48a";
+  g.beginPath();
+  g.arc(W / 2 + 46, 150, 6, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = "#8b887d";
+  g.fillRect(8, H - 20, W - 16, 16);
   return texture(c, false);
 }

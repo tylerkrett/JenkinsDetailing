@@ -6,7 +6,19 @@ import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Color, Fog, type Group, type Mesh, type SpotLight } from "three";
 
 import { lerp, unlerp } from "~/lib/motion";
-import { ACT_COUNT, BAY, CAR, DRIVE_FROM_Z, DWELL_SPAN, actState, carX, carYaw, carZ, dwellStart, totalTravel } from "~/lib/scene/bay-layout";
+import {
+  ACT_COUNT,
+  BAY,
+  CAR,
+  DRIVE_FROM_Z,
+  DWELL_SPAN,
+  actState,
+  carX,
+  carYaw,
+  carZ,
+  dwellStart,
+  totalTravel,
+} from "~/lib/scene/bay-layout";
 import {
   LIME,
   makeBlockworkTexture,
@@ -22,6 +34,7 @@ import { resetFx } from "~/lib/scene/fx";
 import { useScene } from "~/lib/scene/store";
 
 import { Car, type CarFrame } from "./car";
+import { Decor } from "./decor";
 import { Exterior } from "./exterior";
 import { type ActFrame, Process } from "./process";
 
@@ -77,7 +90,8 @@ export function Bay({ mobile }: Props) {
     const tiles = makeTileTexture(cellsX, cellsY, (x, y) => {
       const edge = x < 2 || x >= cellsX - 2;
       const front = y >= cellsY - 3;
-      const stripe = y === Math.round(cellsY * 0.42) || y === Math.round(cellsY * 0.42) + 1;
+      const stripe =
+        y === Math.round(cellsY * 0.42) || y === Math.round(cellsY * 0.42) + 1;
       return edge || front || stripe;
     });
     const wall = makeBlockworkTexture();
@@ -118,7 +132,11 @@ export function Bay({ mobile }: Props) {
 
     // After the reveal the bay lights fall to a glow so the page beneath reads.
     const u = progress * total;
-    const afterReveal = unlerp(dwellStart(ACT_COUNT - 1) + DWELL_SPAN, dwellStart(ACT_COUNT - 1) + DWELL_SPAN + 10, u);
+    const afterReveal = unlerp(
+      dwellStart(ACT_COUNT - 1) + DWELL_SPAN,
+      dwellStart(ACT_COUNT - 1) + DWELL_SPAN + 10,
+      u,
+    );
     const dimmed = 1 - afterReveal * 0.85;
     spots.current.forEach((sp, i) => {
       if (sp) sp.intensity = (i === 0 ? 80 : 55) * lightIntensity * dimmed;
@@ -132,9 +150,20 @@ export function Bay({ mobile }: Props) {
     // lift takes it up, the wheels come off, and both return at the end of the dwell.
     // Act 4: the door.
     const driveIn = act > 0 ? 1 : 1 - carZ(u) / DRIVE_FROM_Z;
-    const lift = act === 2 ? Math.sin(Math.min(1, dwell / 0.25) * Math.PI * 0.5) * (1 - smooth(Math.max(0, (dwell - 0.85) / 0.15))) : 0;
-    const wheelsOff = act === 2 ? smooth(unlerp(0.25, 0.45, dwell)) * (1 - smooth(unlerp(0.8, 0.92, dwell))) : 0;
-    const door = act === 3 ? smooth(unlerp(0, 0.12, dwell)) * (1 - smooth(unlerp(0.9, 1, dwell))) : 0;
+    const lift =
+      act === 2
+        ? Math.sin(Math.min(1, dwell / 0.25) * Math.PI * 0.5) *
+          (1 - smooth(Math.max(0, (dwell - 0.85) / 0.15)))
+        : 0;
+    const wheelsOff =
+      act === 2
+        ? smooth(unlerp(0.25, 0.45, dwell)) *
+          (1 - smooth(unlerp(0.8, 0.92, dwell)))
+        : 0;
+    const door =
+      act === 3
+        ? smooth(unlerp(0, 0.12, dwell)) * (1 - smooth(unlerp(0.9, 1, dwell)))
+        : 0;
     const cf = carFrame.current;
     cf.driveIn = driveIn;
     cf.x = act > 0 ? 0 : carX(u);
@@ -143,9 +172,19 @@ export function Bay({ mobile }: Props) {
     cf.wheelsOff = wheelsOff;
     cf.door = door;
     // Headlights: on for the drive-in until parked; on again at the end of the reveal.
-    cf.headlights = act === 0 ? 1 - smooth(unlerp(0.86, 1, dwell)) : act === ACT_COUNT - 1 ? smooth(unlerp(0.7, 0.85, dwell)) : 0;
+    cf.headlights =
+      act === 0
+        ? 1 - smooth(unlerp(0.86, 1, dwell))
+        : act === ACT_COUNT - 1
+          ? smooth(unlerp(0.7, 0.85, dwell))
+          : 0;
     const g = car.current;
-    if (g) g.position.set(cf.x, lift * BAY.liftHeight, lerp(DRIVE_FROM_Z, 0, driveIn));
+    if (g)
+      g.position.set(
+        cf.x,
+        lift * BAY.liftHeight,
+        lerp(DRIVE_FROM_Z, 0, driveIn),
+      );
   });
 
   const W = BAY.halfW;
@@ -162,12 +201,40 @@ export function Bay({ mobile }: Props) {
         <color attach="background" args={["#1a1d24"]} />
         {panelRows.flatMap((z) =>
           panelCols.map((x) => (
-            <Lightformer key={`${x}${z}`} form="rect" intensity={5} color="#e8eeff" position={[x, H - 0.05, z]} rotation={[Math.PI / 2, 0, 0]} scale={[1.2, 0.6, 1]} />
+            <Lightformer
+              key={`${x}${z}`}
+              form="rect"
+              intensity={5}
+              color="#e8eeff"
+              position={[x, H - 0.05, z]}
+              rotation={[Math.PI / 2, 0, 0]}
+              scale={[1.2, 0.6, 1]}
+            />
           )),
         )}
-        <Lightformer form="rect" intensity={0.9} color="#d6dae0" position={[-W, 1.8, 0]} rotation={[0, Math.PI / 2, 0]} scale={[L, 3.6, 1]} />
-        <Lightformer form="rect" intensity={0.9} color="#d6dae0" position={[W, 1.8, 0]} rotation={[0, -Math.PI / 2, 0]} scale={[L, 3.6, 1]} />
-        <Lightformer form="rect" intensity={0.8} color="#d6dae0" position={[0, 1.8, -L / 2]} scale={[W * 2, 3.6, 1]} />
+        <Lightformer
+          form="rect"
+          intensity={0.9}
+          color="#d6dae0"
+          position={[-W, 1.8, 0]}
+          rotation={[0, Math.PI / 2, 0]}
+          scale={[L, 3.6, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={0.9}
+          color="#d6dae0"
+          position={[W, 1.8, 0]}
+          rotation={[0, -Math.PI / 2, 0]}
+          scale={[L, 3.6, 1]}
+        />
+        <Lightformer
+          form="rect"
+          intensity={0.8}
+          color="#d6dae0"
+          position={[0, 1.8, -L / 2]}
+          scale={[W * 2, 3.6, 1]}
+        />
       </Environment>
       <hemisphereLight color="#9aa6bd" groundColor="#0c0f14" intensity={0.55} />
       <ambientLight intensity={0.14} />
@@ -183,7 +250,10 @@ export function Bay({ mobile }: Props) {
             position={[x, H - 0.04, z]}
           >
             <boxGeometry args={[1.2, 0.06, 0.6]} />
-            <meshBasicMaterial color={new Color(1.7, 1.8, 2.0)} toneMapped={false} />
+            <meshBasicMaterial
+              color={new Color(1.7, 1.8, 2.0)}
+              toneMapped={false}
+            />
           </mesh>
         )),
       )}
@@ -218,10 +288,22 @@ export function Bay({ mobile }: Props) {
       {/* Floor: the tiles inside. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[W * 2, L]} />
-        <meshStandardMaterial map={tex.tiles} roughness={0.55} metalness={0.05} />
+        <meshStandardMaterial
+          map={tex.tiles}
+          roughness={0.55}
+          metalness={0.05}
+        />
       </mesh>
       {!mobile ? (
-        <ContactShadows position={[0, 0.01, 0]} scale={[8, 12]} blur={2.2} opacity={0.6} far={1.6} resolution={512} frames={Infinity} />
+        <ContactShadows
+          position={[0, 0.01, 0]}
+          scale={[8, 12]}
+          blur={2.2}
+          opacity={0.6}
+          far={1.6}
+          resolution={512}
+          frames={Infinity}
+        />
       ) : null}
 
       {/* Walls, ceiling and the back. */}
@@ -259,21 +341,40 @@ export function Bay({ mobile }: Props) {
             <group key={y}>
               <mesh position={[0.2, y, 0]}>
                 <boxGeometry args={[0.4, 0.04, 2.6]} />
-                <meshStandardMaterial color="#2b2e34" roughness={0.7} metalness={0.4} />
+                <meshStandardMaterial
+                  color="#2b2e34"
+                  roughness={0.7}
+                  metalness={0.4}
+                />
               </mesh>
-              <mesh position={[0.22, y + 0.24, 0]} rotation={[0, Math.PI / 2, 0]}>
+              <mesh
+                position={[0.22, y + 0.24, 0]}
+                rotation={[0, Math.PI / 2, 0]}
+              >
                 <planeGeometry args={[2.5, 0.44]} />
-                <meshStandardMaterial map={(i + j) % 2 ? tex.bottles : tex.bottles2} roughness={0.5} transparent />
+                <meshStandardMaterial
+                  map={(i + j) % 2 ? tex.bottles : tex.bottles2}
+                  roughness={0.5}
+                  transparent
+                />
               </mesh>
             </group>
           ))}
           <mesh position={[0.2, 1.3, -1.32]}>
             <boxGeometry args={[0.42, 2.6, 0.04]} />
-            <meshStandardMaterial color="#2b2e34" roughness={0.7} metalness={0.4} />
+            <meshStandardMaterial
+              color="#2b2e34"
+              roughness={0.7}
+              metalness={0.4}
+            />
           </mesh>
           <mesh position={[0.2, 1.3, 1.32]}>
             <boxGeometry args={[0.42, 2.6, 0.04]} />
-            <meshStandardMaterial color="#2b2e34" roughness={0.7} metalness={0.4} />
+            <meshStandardMaterial
+              color="#2b2e34"
+              roughness={0.7}
+              metalness={0.4}
+            />
           </mesh>
         </group>
       ))}
@@ -285,7 +386,11 @@ export function Bay({ mobile }: Props) {
       </mesh>
       <mesh position={[W - 0.5, 0.5, 1.6]} castShadow>
         <boxGeometry args={[0.7, 1.0, 1.4]} />
-        <meshStandardMaterial color="#c8102e" roughness={0.45} metalness={0.5} />
+        <meshStandardMaterial
+          color="#c8102e"
+          roughness={0.45}
+          metalness={0.5}
+        />
       </mesh>
       <mesh position={[W - 0.5, 0.42, 4.2]} castShadow>
         <boxGeometry args={[0.6, 0.84, 0.9]} />
@@ -305,8 +410,16 @@ export function Bay({ mobile }: Props) {
       </mesh>
       <mesh position={[0, H - 0.75, BAY.shutterZ]}>
         <planeGeometry args={[6.2, 0.5]} />
-        <meshStandardMaterial map={tex.shutter} roughness={0.5} metalness={0.5} side={2} />
+        <meshStandardMaterial
+          map={tex.shutter}
+          roughness={0.5}
+          metalness={0.5}
+          side={2}
+        />
       </mesh>
+
+      {/* What is on the walls: the badge chart, the enamel signs and the product boards. */}
+      <Decor mobile={mobile} />
 
       {/* Everything beyond the shutter: the forecourt, the town, the sky, the rain. */}
       <Exterior mobile={mobile} />
@@ -317,7 +430,12 @@ export function Bay({ mobile }: Props) {
           <group ref={car} position={[0, 0, DRIVE_FROM_Z]}>
             <mesh position={[0, 0.55, 0]}>
               <boxGeometry args={[CAR.width, 0.6, CAR.length]} />
-              <meshPhysicalMaterial color="#1b2f86" roughness={0.35} metalness={0.6} clearcoat={0.6} />
+              <meshPhysicalMaterial
+                color="#1b2f86"
+                roughness={0.35}
+                metalness={0.6}
+                clearcoat={0.6}
+              />
             </mesh>
           </group>
         }
@@ -331,11 +449,19 @@ export function Bay({ mobile }: Props) {
         <group key={sx}>
           <mesh position={[sx * (CAR.width / 2 + 1.5), 1.4, 0]} castShadow>
             <boxGeometry args={[0.24, 2.8, 0.34]} />
-            <meshStandardMaterial color="#2a3b8f" roughness={0.55} metalness={0.3} />
+            <meshStandardMaterial
+              color="#2a3b8f"
+              roughness={0.55}
+              metalness={0.3}
+            />
           </mesh>
           <mesh position={[sx * (CAR.width / 2 + 1.5), 0.12, 0]}>
             <boxGeometry args={[0.6, 0.24, 0.9]} />
-            <meshStandardMaterial color="#1f2a66" roughness={0.6} metalness={0.3} />
+            <meshStandardMaterial
+              color="#1f2a66"
+              roughness={0.6}
+              metalness={0.3}
+            />
           </mesh>
         </group>
       ))}
@@ -347,7 +473,10 @@ export function Bay({ mobile }: Props) {
 /** A thin lime line on the floor at the shutter: the threshold, the way the real bay has one. */
 function LimeMarker() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, BAY.shutterZ - 0.4]}>
+    <mesh
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, 0.003, BAY.shutterZ - 0.4]}
+    >
       <planeGeometry args={[6.2, 0.08]} />
       <meshBasicMaterial color={LIME} />
     </mesh>
