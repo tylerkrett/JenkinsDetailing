@@ -319,20 +319,20 @@ collections:
                 default: 0
                 step: 1
   - name: "work"
-    label: "Before and after"
-    icon: "compare"
-    description: "Pairs of photos of real jobs."
+    label: "Work"
+    icon: "photo_library"
+    description: "Photos of real jobs. Add a before shot if you have one; otherwise the after photo stands alone."
     media_folder: "/public/photos/work"
     public_folder: "/photos/work"
     files:
       - name: "work"
-        label: "Pairs"
+        label: "Jobs"
         file: "content/work.json"
         format: "json"
         fields:
           - name: "work"
-            label: "Pairs"
-            label_singular: "Pair"
+            label: "Jobs"
+            label_singular: "Job"
             widget: "list"
             root: true
             summary: "{{title}}"
@@ -367,12 +367,14 @@ collections:
                 required: false
               - name: "before"
                 label: "Before photo"
-                hint: "Same angle as the after photo if you can."
+                hint: "Optional. Same angle as the after photo if you can. Leave empty for a finished-job shot."
                 widget: "image"
+                required: false
                 accept: "image/jpeg,image/png,image/webp"
                 choose_url: false
               - name: "after"
-                label: "After photo"
+                label: "Photo"
+                hint: "The finished job, or the after shot of a pair."
                 widget: "image"
                 accept: "image/jpeg,image/png,image/webp"
                 choose_url: false
@@ -383,7 +385,7 @@ collections:
                 required: false
               - name: "featured"
                 label: "Featured"
-                hint: "Featured pairs appear on the home page."
+                hint: "Featured work appears on the home page."
                 widget: "boolean"
                 default: false
               - name: "published"

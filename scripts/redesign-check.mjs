@@ -24,12 +24,18 @@ const ROUTES = [
   "/watch?view=plain",
   "/privacy",
   "/terms",
+  "/play",
 ];
 
 const failures = [];
 const step = (label) => console.log(`• ${label}`);
 const viewCookie = async (context) => (await context.cookies()).find((c) => c.name === "jd-view")?.value;
-const noThree = (page) => page.evaluate(() => !("__THREE__" in window) && !document.querySelector("canvas"));
+// Bucket Run draws on its own 2D canvas; any other canvas would be the 3D scene.
+const noThree = (page) =>
+  page.evaluate(
+    () =>
+      !("__THREE__" in window) && [...document.querySelectorAll("canvas")].every((c) => c.closest("[data-bucket-run]")),
+  );
 
 await mkdir(OUT, { recursive: true });
 let axe = null;

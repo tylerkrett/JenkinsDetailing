@@ -1,16 +1,11 @@
 /**
- * The street: speed curve, scoring, the obstacle and can spawner, and the scenery that
- * scrolls past (lamps, shutters, murals, chalk, rooftops). Pure and seeded, so a run can be
- * replayed for tests and screenshots.
+ * The run: speed curve, scoring, the obstacle and bottle spawner, and the frontage of Rose
+ * Garage that scrolls past (cladding, roller doors, windows, the sign, the cottage and, on
+ * a fixed grid, the lit bays with a car in). Pure and seeded, so a run can be replayed for
+ * tests and screenshots. Scenery draws from its own random stream, so the obstacles a seed
+ * produces never depend on the screen size.
  */
-import {
-  CAN,
-  OBSTACLES,
-  type Can,
-  type Obstacle,
-  type ObstacleDef,
-  type ObstacleKind,
-} from "./entities";
+import { BOTTLE, OBSTACLES, type Bottle, type Obstacle, type ObstacleDef, type ObstacleKind } from "./entities";
 
 export const SPEED = { min: 300, max: 675, rampScore: 2000 } as const;
 /** Logical px of travel per point. */
@@ -42,140 +37,135 @@ export function createRng(seed: number) {
 }
 export type Rng = ReturnType<typeof createRng>;
 
-export const NEIGHBOURHOODS = [
-  "Shoreditch",
-  "Brooklyn",
-  "Peckham",
-  "Bushwick",
-  "Hackney Wick",
-  "Williamsburg",
+/** The stretches of the night shift, named on screen every 500 points. */
+export const STAGES = [
+  "The forecourt",
+  "Wash bay",
+  "Under the lights",
+  "The workshop",
+  "Polishing lane",
+  "The final rinse",
 ] as const;
-export type Neighbourhood = (typeof NEIGHBOURHOODS)[number];
-export const NEIGHBOURHOOD_EVERY = 500;
+export type Stage = (typeof STAGES)[number];
+export const STAGE_EVERY = 500;
 
-export function neighbourhoodFor(score: number): Neighbourhood {
-  const i = Math.floor(Math.max(0, score) / NEIGHBOURHOOD_EVERY) % NEIGHBOURHOODS.length;
-  return NEIGHBOURHOODS[i]!;
+export function stageFor(score: number): Stage {
+  const i = Math.floor(Math.max(0, score) / STAGE_EVERY) % STAGES.length;
+  return STAGES[i]!;
 }
 
-/** Rooftop vocabulary per neighbourhood; the silhouette layers draw from these. */
-export type RoofStyle = "terrace" | "warehouse" | "tower" | "sawtooth";
-export type RoofDeco = "chimneys" | "watertower" | "crane" | "aerial" | "gasholder" | "tank";
-export const SKYLINE: Record<
-  Neighbourhood,
-  { styles: readonly RoofStyle[]; decos: readonly RoofDeco[]; heights: [number, number] }
-> = {
-  Shoreditch: { styles: ["terrace", "terrace", "warehouse"], decos: ["chimneys", "crane", "aerial"], heights: [70, 130] },
-  Brooklyn: { styles: ["warehouse", "tower", "terrace"], decos: ["watertower", "watertower", "aerial"], heights: [80, 150] },
-  Peckham: { styles: ["tower", "terrace", "terrace"], decos: ["aerial", "chimneys", "tank"], heights: [60, 170] },
-  Bushwick: { styles: ["warehouse", "sawtooth", "warehouse"], decos: ["watertower", "tank", "aerial"], heights: [60, 110] },
-  "Hackney Wick": { styles: ["sawtooth", "warehouse", "terrace"], decos: ["gasholder", "crane", "chimneys"], heights: [60, 120] },
-  Williamsburg: { styles: ["tower", "warehouse", "tower"], decos: ["watertower", "aerial", "tank"], heights: [90, 180] },
-};
+/** Modules of the garage frontage. `wall` is plain cladding of any width; the rest are fixed. */
+export type FacadeKind = "wall" | "door" | "window" | "sign" | "cottage";
+export const FACADE_W = { door: 150, window: 110, sign: 220, cottage: 200 } as const;
+export type Facade = { x: number; w: number; kind: FacadeKind; seed: number };
 
-export type Building = {
-  x: number;
-  w: number;
-  h: number;
-  style: RoofStyle;
-  deco: RoofDeco | null;
-  /** Window rhythm seed. */
-  seed: number;
-};
-export type RoofLayer = { parallax: number; buildings: Building[]; nextX: number };
-
-export type Chalk = { x: number; text: string };
-export type Shutter = { x: number; w: number; seed: number };
-export type Mural = { x: number; w: number };
+const FACADE_MIX: { kind: FacadeKind; weight: number }[] = [
+  { kind: "wall", weight: 3 },
+  { kind: "door", weight: 3 },
+  { kind: "window", weight: 3 },
+  { kind: "sign", weight: 1 },
+  { kind: "cottage", weight: 1 },
+];
+const FACADE_WEIGHT = FACADE_MIX.reduce((s, f) => s + f.weight, 0);
 
 export const LAMP_SPACING = 640;
-export const MURAL_FIRST = 1400;
-export const MURAL_SPACING = 3200;
-export const MURAL_W = 260;
-export const MURAL_PIECES = 8;
+/** The lit bays, each with a car the bottles polish, sit at fixed world positions. */
+export const BAY_FIRST = 1400;
+export const BAY_SPACING = 3200;
+export const BAY_W = 260;
+/** Panels per car; one is polished for every BOTTLE.perPanel bottles. */
+export const PANELS = 8;
 
 export type WorldState = {
   rng: Rng;
+  /** Scenery's own stream. */
+  scenery: Rng;
+  /** Where this run started; the score counts from here. */
+  origin: number;
   /** Distance travelled in logical px. Screen x = worldX - distance. */
   distance: number;
   prevDistance: number;
   score: number;
-  cans: number;
+  bottles: number;
   obstacles: Obstacle[];
-  pickups: Can[];
+  pickups: Bottle[];
   nextObstacleX: number;
   nextId: number;
-  neighbourhood: Neighbourhood;
-  chalk: Chalk[];
-  shutters: Shutter[];
-  nextShutterX: number;
-  far: RoofLayer;
-  near: RoofLayer;
-  /** Fixed star field, parallax 0.04, as [x, y, size] in a 2000 px wide loop. */
-  stars: [number, number, number][];
+  stage: Stage;
+  facade: Facade[];
+  nextFacadeX: number;
+  /** Fixed star field as [x in a 2000 px loop, height as a share of the sky, size, alpha]. */
+  stars: [number, number, number, number][];
+  /** Phases that shape the hills, so each visit gets its own skyline. */
+  hills: [number, number, number];
 };
-
-export function createWorld(seed: number, viewW: number): WorldState {
-  const rng = createRng(seed);
-  const stars: [number, number, number][] = [];
-  for (let i = 0; i < 70; i++) stars.push([rng.range(0, 2000), rng.range(0.02, 0.5), rng.range(0.6, 1.6)]);
-  const w: WorldState = {
-    rng,
-    distance: 0,
-    prevDistance: 0,
-    score: 0,
-    cans: 0,
-    obstacles: [],
-    pickups: [],
-    // The first obstacle arrives after a breath, whatever the screen width.
-    nextObstacleX: viewW + 420,
-    nextId: 1,
-    neighbourhood: NEIGHBOURHOODS[0],
-    chalk: [{ x: viewW * 0.55, text: NEIGHBOURHOODS[0] }],
-    shutters: [],
-    nextShutterX: 380,
-    far: { parallax: 0.16, buildings: [], nextX: -200 },
-    near: { parallax: 0.34, buildings: [], nextX: -200 },
-    stars,
-  };
-  fillRoofs(w, w.far, viewW, 1.0);
-  fillRoofs(w, w.near, viewW, 0.72);
-  return w;
-}
 
 /** Ahead of the camera by this many px is the spawn horizon. */
 const HORIZON = 200;
 
-/** Moves the world by dt at the given speed and spawns what has come into range. */
-export function stepWorld(w: WorldState, dt: number, speed: number, viewW: number) {
+export function createWorld(seed: number, viewW: number, origin = 0): WorldState {
+  const rng = createRng(seed);
+  const scenery = createRng(seed ^ 0x5bd1e995);
+  const stars: WorldState["stars"] = [];
+  for (let i = 0; i < 80; i++) {
+    stars.push([scenery.range(0, 2000), scenery.range(0.03, 0.8), scenery.range(0.8, 1.8), scenery.range(0.25, 0.85)]);
+  }
+  const w: WorldState = {
+    rng,
+    scenery,
+    origin,
+    distance: origin,
+    prevDistance: origin,
+    score: 0,
+    bottles: 0,
+    obstacles: [],
+    pickups: [],
+    // The first obstacle arrives after a breath, whatever the screen width.
+    nextObstacleX: origin + viewW + 420,
+    nextId: 1,
+    stage: STAGES[0],
+    facade: [],
+    nextFacadeX: origin - 260,
+    stars,
+    hills: [scenery.range(0, 100), scenery.range(0, 100), scenery.range(0, 100)],
+  };
+  fillFacade(w, origin + viewW + HORIZON);
+  return w;
+}
+
+/** Starts a run where the scenery is now, so the frontage carries straight on. */
+export function startRun(w: WorldState, viewW: number) {
+  w.origin = w.distance;
+  w.prevDistance = w.distance;
+  w.score = 0;
+  w.bottles = 0;
+  w.obstacles.length = 0;
+  w.pickups.length = 0;
+  w.nextObstacleX = w.distance + viewW + 420;
+  w.stage = STAGES[0];
+}
+
+/**
+ * Moves the world by dt at the given speed. Obstacles and bottles only spawn, and the score
+ * only counts, when `spawn` is on; the title screen just drifts past the frontage.
+ */
+export function stepWorld(w: WorldState, dt: number, speed: number, viewW: number, spawn = true) {
   w.prevDistance = w.distance;
   w.distance += speed * dt;
-  const distScore = Math.floor(w.distance / PX_PER_POINT);
-  w.score = distScore + w.cans * CAN.points;
-
-  const n = neighbourhoodFor(w.score);
-  if (n !== w.neighbourhood) {
-    w.neighbourhood = n;
-    w.chalk.push({ x: w.distance + viewW + 60, text: n });
-  }
-
   const edge = w.distance + viewW + HORIZON;
-  while (w.nextObstacleX < edge) spawnObstacle(w, speed);
-  while (w.nextShutterX < edge) {
-    w.shutters.push({ x: w.nextShutterX, w: w.rng.int(90, 150), seed: w.rng.next() });
-    w.nextShutterX += w.rng.int(420, 760);
+  if (spawn) {
+    w.score = Math.floor((w.distance - w.origin) / PX_PER_POINT) + w.bottles * BOTTLE.points;
+    w.stage = stageFor(w.score);
+    while (w.nextObstacleX < edge) spawnObstacle(w, speed);
   }
-  fillRoofs(w, w.far, viewW, 1.0);
-  fillRoofs(w, w.near, viewW, 0.72);
+  fillFacade(w, edge);
 
-  // Cull what has left the screen.
+  // Cull what has left the screen. Everything is appended in x order, so trim from the front
+  // in place: no new arrays sixty times a second.
   const gone = w.distance - 200;
-  w.obstacles = w.obstacles.filter((o) => o.x + o.def.w > gone);
-  w.pickups = w.pickups.filter((c) => !c.taken && c.x + CAN.w > gone);
-  w.chalk = w.chalk.filter((c) => c.x + 400 > gone);
-  w.shutters = w.shutters.filter((s) => s.x + s.w > gone);
-  cullRoofs(w.far, w.distance);
-  cullRoofs(w.near, w.distance);
+  while (w.obstacles.length && w.obstacles[0]!.x + w.obstacles[0]!.def.w < gone) w.obstacles.shift();
+  while (w.pickups.length && w.pickups[0]!.x + BOTTLE.w < gone) w.pickups.shift();
+  while (w.facade.length && w.facade[0]!.x + w.facade[0]!.w < gone - 100) w.facade.shift();
 }
 
 /** Air time of a full jump, used to size gaps so every one is clearable. */
@@ -211,15 +201,15 @@ function spawnObstacle(w: WorldState, speed: number) {
   const minGap = speed * (FULL_JUMP_TIME * 0.95) + 110;
   const gap = minGap + speed * w.rng.range(0.15, 0.95);
   const nextX = tailX + gap;
-  spawnCans(w, def, x, tailX, nextX);
+  spawnBottles(w, def, x, tailX, nextX);
   w.nextObstacleX = nextX;
 }
 
-function spawnCans(w: WorldState, def: ObstacleDef, x: number, tailX: number, nextX: number) {
+function spawnBottles(w: WorldState, def: ObstacleDef, x: number, tailX: number, nextX: number) {
   const roll = w.rng.next();
-  // One can floating over a small obstacle rewards the clean jump.
+  // One bottle floating over a small obstacle rewards the clean jump.
   if (def.lift === 0 && def.w <= 40 && def.h <= 46 && roll < 0.45) {
-    w.pickups.push({ x: x + def.w / 2 - CAN.w / 2, y: def.h + 34, id: w.nextId++, taken: false });
+    w.pickups.push({ x: x + def.w / 2 - BOTTLE.w / 2, y: def.h + 34, id: w.nextId++, taken: false });
     return;
   }
   const gap = nextX - tailX;
@@ -228,70 +218,94 @@ function spawnCans(w: WorldState, def: ObstacleDef, x: number, tailX: number, ne
   if (roll < 0.75) {
     // An arc of three at jump height.
     for (let i = -1; i <= 1; i++) {
-      w.pickups.push({ x: mid + i * 44 - CAN.w / 2, y: i === 0 ? 92 : 62, id: w.nextId++, taken: false });
+      w.pickups.push({ x: mid + i * 44 - BOTTLE.w / 2, y: i === 0 ? 92 : 62, id: w.nextId++, taken: false });
     }
   } else if (roll < 0.92) {
-    // Two on the pavement, no jump needed.
+    // Two on the forecourt, no jump needed.
     for (let i = 0; i < 2; i++) {
       w.pickups.push({ x: mid - 30 + i * 46, y: 10, id: w.nextId++, taken: false });
     }
   }
 }
 
-function fillRoofs(w: WorldState, layer: RoofLayer, viewW: number, scale: number) {
-  const camera = w.distance * layer.parallax;
-  const edge = camera + viewW + 100;
-  const sky = SKYLINE[w.neighbourhood];
-  while (layer.nextX < edge) {
-    const style = w.rng.pick(sky.styles);
-    const bw = w.rng.int(70, 150) * (style === "tower" ? 0.8 : 1);
-    const [lo, hi] = sky.heights;
-    const h = w.rng.range(lo, hi) * scale * (style === "tower" ? 1.3 : 1);
-    layer.buildings.push({
-      x: layer.nextX,
-      w: bw,
-      h,
-      style,
-      deco: w.rng.next() < 0.45 ? w.rng.pick(sky.decos) : null,
-      seed: w.rng.next(),
-    });
-    layer.nextX += bw + w.rng.int(-6, 22);
+/* ---------- the frontage ---------- */
+
+/** The bay whose span contains x, or null. */
+function bayAt(x: number) {
+  if (x < BAY_FIRST) return null;
+  const start = BAY_FIRST + Math.floor((x - BAY_FIRST) / BAY_SPACING) * BAY_SPACING;
+  return x < start + BAY_W ? start : null;
+}
+
+/** The first bay that starts at or after x. */
+function nextBayFrom(x: number) {
+  return BAY_FIRST + Math.max(0, Math.ceil((x - BAY_FIRST) / BAY_SPACING)) * BAY_SPACING;
+}
+
+function pickFacade(w: WorldState): FacadeKind {
+  const last = w.facade[w.facade.length - 1]?.kind;
+  for (let tries = 0; tries < 4; tries++) {
+    let r = w.scenery.next() * FACADE_WEIGHT;
+    for (const f of FACADE_MIX) {
+      r -= f.weight;
+      if (r > 0) continue;
+      // Plain wall may repeat; a feature never sits beside another of its kind.
+      if (f.kind === "wall" || f.kind !== last) return f.kind;
+      break;
+    }
+  }
+  return "wall";
+}
+
+function fillFacade(w: WorldState, edge: number) {
+  while (w.nextFacadeX < edge) {
+    const x = w.nextFacadeX;
+    const inBay = bayAt(x);
+    if (inBay !== null) {
+      w.nextFacadeX = inBay + BAY_W;
+      continue;
+    }
+    const kind = pickFacade(w);
+    const width = kind === "wall" ? w.scenery.int(70, 190) : FACADE_W[kind];
+    const bay = nextBayFrom(x);
+    if (x + width > bay) {
+      // Plain wall up to the bay, then carry on after it.
+      w.facade.push({ x, w: bay - x, kind: "wall", seed: w.scenery.next() });
+      w.nextFacadeX = bay + BAY_W;
+      continue;
+    }
+    w.facade.push({ x, w: width, kind, seed: w.scenery.next() });
+    w.nextFacadeX = x + width;
   }
 }
 
-function cullRoofs(layer: RoofLayer, distance: number) {
-  const gone = distance * layer.parallax - 80;
-  if (layer.buildings.length && layer.buildings[0]!.x + layer.buildings[0]!.w < gone) {
-    layer.buildings = layer.buildings.filter((b) => b.x + b.w > gone);
-  }
-}
-
-/** Murals live at fixed world positions; returns those overlapping the view. */
-export function muralsInView(distance: number, viewW: number): Mural[] {
-  const out: Mural[] = [];
-  const first = Math.max(0, Math.floor((distance - MURAL_W - MURAL_FIRST) / MURAL_SPACING));
+/** World x of the bays overlapping the view, written into `out` (reused every frame). */
+export function baysInView(distance: number, viewW: number, out: number[] = []): number[] {
+  out.length = 0;
+  const first = Math.max(0, Math.floor((distance - BAY_W - BAY_FIRST) / BAY_SPACING));
   for (let k = first; ; k++) {
-    const x = MURAL_FIRST + k * MURAL_SPACING;
+    const x = BAY_FIRST + k * BAY_SPACING;
     if (x > distance + viewW) break;
-    if (x + MURAL_W > distance) out.push({ x, w: MURAL_W });
+    if (x + BAY_W > distance) out.push(x);
   }
   return out;
 }
 
-/** Lamp posts likewise. */
-export function lampsInView(distance: number, viewW: number): number[] {
-  const out: number[] = [];
-  const first = Math.floor((distance - 40) / LAMP_SPACING);
+/** World x of the street lamps in view, likewise. */
+export function lampsInView(distance: number, viewW: number, out: number[] = []): number[] {
+  out.length = 0;
+  const first = Math.floor((distance - 120) / LAMP_SPACING);
   for (let k = Math.max(0, first); ; k++) {
     const x = 300 + k * LAMP_SPACING;
-    if (x > distance + viewW + 40) break;
-    if (x > distance - 40) out.push(x);
+    if (x > distance + viewW + 120) break;
+    if (x > distance - 120) out.push(x);
   }
   return out;
 }
 
-export function muralPieces(cans: number) {
-  return Math.min(MURAL_PIECES, Math.floor(cans / CAN.perPiece));
+/** Car panels polished by this many bottles. */
+export function panelsFor(bottles: number) {
+  return Math.min(PANELS, Math.floor(bottles / BOTTLE.perPanel));
 }
 
 export type { ObstacleKind };

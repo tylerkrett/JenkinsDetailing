@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
-import { StreetRun } from "~/components/game/street-run";
+import { BucketRun } from "~/components/game/bucket-run";
+import styles from "~/components/game/play.module.css";
 import { JsonLd } from "~/components/site/json-ld";
 import { OG, WEBSITE_ID, absolute, businessRef, graph, ogImage, pageMetadata } from "~/lib/seo";
 
 const TITLE = "Bucket Run";
 const DESCRIPTION =
-  "Run the forecourt, jump the cones, duck the shutter, collect the bottles. Online or off.";
+  "The night shift at Rose Garage: jump the cones, duck the red kites and collect the bottles that polish the cars. Plays offline too.";
 
 export const metadata: Metadata = pageMetadata({
   title: TITLE,
@@ -33,16 +35,63 @@ export default function PlayPage() {
   });
 
   return (
-    <main id="main" className="mx-auto max-w-7xl px-6 pt-24 pb-16 sm:pt-28">
+    <main id="main" className={styles.page}>
       <JsonLd data={structured} />
-      <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-2">
-        <h1 className="font-display text-display-md font-bold tracking-tight">{TITLE}</h1>
-        <p className="text-bone/60 text-sm sm:text-base">
-          <span className="[@media(pointer:fine)]:hidden">Tap to jump, swipe down to duck.</span>
-          <span className="hidden [@media(pointer:fine)]:inline">Space jumps, down arrow ducks.</span>
-        </p>
-      </div>
-      <StreetRun />
+      <h1 className="sr-only">{TITLE}</h1>
+      <BucketRun />
+
+      <section aria-labelledby="how-to-play" className={styles.notes}>
+        <div>
+          <h2 id="how-to-play">How to play</h2>
+          <dl className={styles.controls}>
+            <div>
+              <dt>
+                <kbd>Space</kbd>
+                <kbd>↑</kbd>
+              </dt>
+              <dd>Jump. Hold it for a higher one.</dd>
+            </div>
+            <div>
+              <dt>
+                <kbd>↓</kbd>
+              </dt>
+              <dd>Duck under a low kite. In the air, it drops you fast.</dd>
+            </div>
+            <div>
+              <dt>
+                <kbd>P</kbd>
+              </dt>
+              <dd>Pause.</dd>
+            </div>
+          </dl>
+          <p>On a phone, tap the game to jump and swipe down to duck, or use the buttons under it.</p>
+        </div>
+        <div>
+          <h2>Bottles polish the cars</h2>
+          <p>
+            Each bottle is worth five points. Every ten polish another panel on the cars waiting in the bays; collect
+            eighty and they gleam. High kites fly clear over a bucket that stays on the ground.
+          </p>
+        </div>
+        <div>
+          <h2>It plays offline</h2>
+          <p>
+            Lose signal while you are on the site and Bucket Run opens instead. Your best score stays on this device.
+          </p>
+        </div>
+      </section>
+
+      <section aria-label="Book a real clean" className={styles.cta}>
+        <p className={styles.ctaLine}>Rather have a real clean?</p>
+        <div className={styles.ctaActions}>
+          <Link href="/contact" className="button-primary">
+            Get a quote
+          </Link>
+          <Link href="/services" className="button-outline">
+            See the services
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }

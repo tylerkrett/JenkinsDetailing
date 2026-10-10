@@ -77,14 +77,15 @@ export default async function HomePage() {
   ]);
   const headline = home.headline || settings.promise || SITE_NAME;
   const featured = services.filter((s) => s.featured).slice(0, 4);
-  const pair = pairs.find((p) => p.featured) ?? pairs[0];
+  const pair = pairs.find((p) => p.featured && p.before) ?? pairs.find((p) => p.before);
+  const shots = pairs.filter((p) => !p.before).slice(0, 4);
   const reveal = steps.at(-1);
   const story = paragraphs(about.story);
 
   const pick = photoPicker();
   const hero = pick(home.heroImage, settings.portrait, reveal?.still);
   const cards = featured.map((service) => ({ service, image: pick(service.image, service.still) }));
-  const finish = pair ? undefined : pick(reveal?.still, reveal?.image);
+  const finish = pair || shots.length ? undefined : pick(reveal?.still, reveal?.image);
   const unit = pick(settings.unitPhoto, ...steps.map((s) => s.still));
   const unitAlt =
     unit === settings.unitPhoto
@@ -171,13 +172,27 @@ export default async function HomePage() {
           id="work"
           eyebrow="The finish"
           title="Let the finish do the talking."
-          href={pair ? "/work" : undefined}
+          href={pair || shots.length ? "/work" : undefined}
           link="More of our work"
         />
-        {pair ? (
+        {pair?.before ? (
           <div data-reveal className="mt-10">
-            <BeforeAfter pair={pair} />
+            <BeforeAfter pair={{ ...pair, before: pair.before }} />
           </div>
+        ) : shots.length ? (
+          <ul data-reveal className="work-home-strip">
+            {shots.map((job) => (
+              <li key={job.slug}>
+                <Link href="/work" className="block">
+                  <Photo
+                    image={job.after}
+                    alt={job.vehicle || job.title}
+                    sizes="(min-width: 1280px) 300px, 45vw"
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
         ) : finish && reveal ? (
           <div data-reveal className="finish-feature">
             <Photo

@@ -262,7 +262,7 @@ async function main() {
     work.push(
       workSchema.parse({
         ...rest,
-        before: await processImage(before, true),
+        before: before ? await processImage(before, true) : undefined,
         after: await processImage(after, true),
       }),
     );

@@ -1,7 +1,7 @@
 /**
- * Player physics and the obstacle and pickup catalogue. Pure: no DOM, no canvas, so it can
+ * Player physics and the obstacle and bottle catalogue. Pure: no DOM, no canvas, so it can
  * be unit tested with node --test. All sizes are logical pixels; `y` is measured UP from
- * the ground line for everything that stands on the pavement.
+ * the ground line for everything that stands on the forecourt.
  */
 
 export type Box = { x: number; y: number; w: number; h: number };
@@ -112,7 +112,7 @@ export function stepPlayer(p: PlayerState, dt: number, speed: number) {
   }
 }
 
-/** The cat's collision box at a given world x, inset so deaths feel fair. */
+/** The bucket's collision box at a given world x, inset so deaths feel fair. */
 export function playerBox(p: PlayerState, x: number): Box {
   const h = p.ducking && p.onGround ? PLAYER.duckH : PLAYER.h;
   const w = PLAYER.w;
@@ -122,22 +122,22 @@ export function playerBox(p: PlayerState, x: number): Box {
 }
 
 export type ObstacleKind =
-  | "bin"
-  | "bin2"
+  | "tyres"
+  | "tyres2"
   | "cone1"
   | "cone2"
   | "cone3"
   | "bollard"
   | "barrier"
-  | "pole"
-  | "pigeonLow"
-  | "pigeonHigh";
+  | "jack"
+  | "kiteLow"
+  | "kiteHigh";
 
 export type ObstacleDef = {
   kind: ObstacleKind;
   w: number;
   h: number;
-  /** Bottom edge above the ground line (pigeons fly). */
+  /** Bottom edge above the ground line (kites fly). */
   lift: number;
   /** Score before this kind can appear. */
   minScore: number;
@@ -145,18 +145,18 @@ export type ObstacleDef = {
 };
 
 export const OBSTACLES: readonly ObstacleDef[] = [
-  { kind: "bin", w: 34, h: 46, lift: 0, minScore: 0, weight: 5 },
-  { kind: "bin2", w: 72, h: 46, lift: 0, minScore: 150, weight: 3 },
+  { kind: "tyres", w: 34, h: 46, lift: 0, minScore: 0, weight: 5 },
+  { kind: "tyres2", w: 72, h: 46, lift: 0, minScore: 150, weight: 3 },
   { kind: "cone1", w: 22, h: 30, lift: 0, minScore: 0, weight: 5 },
   { kind: "cone2", w: 50, h: 30, lift: 0, minScore: 0, weight: 3 },
   { kind: "cone3", w: 78, h: 30, lift: 0, minScore: 120, weight: 2 },
   { kind: "bollard", w: 14, h: 40, lift: 0, minScore: 60, weight: 4 },
   { kind: "barrier", w: 92, h: 36, lift: 0, minScore: 300, weight: 3 },
-  { kind: "pole", w: 66, h: 22, lift: 0, minScore: 250, weight: 3 },
-  // Head height: a standing cat (56) hits it, a ducking cat (32) passes under.
-  { kind: "pigeonLow", w: 40, h: 22, lift: 40, minScore: 400, weight: 3 },
-  // Above the ears: free to run under, a mistimed jump clips it.
-  { kind: "pigeonHigh", w: 40, h: 22, lift: 78, minScore: 550, weight: 2 },
+  { kind: "jack", w: 66, h: 22, lift: 0, minScore: 250, weight: 3 },
+  // Head height: a standing bucket (56) hits it, a ducking one (32) passes under.
+  { kind: "kiteLow", w: 40, h: 22, lift: 40, minScore: 400, weight: 3 },
+  // Above the handle: free to run under, a mistimed jump clips it.
+  { kind: "kiteHigh", w: 40, h: 22, lift: 78, minScore: 550, weight: 2 },
 ];
 
 export const OBSTACLE_INSET = 0.12;
@@ -169,13 +169,14 @@ export function obstacleBox(o: Obstacle): Box {
   return { x: o.x + ix, y: o.def.lift + iy, w: o.def.w - ix * 2, h: o.def.h - iy * 2 };
 }
 
-export const CAN = { w: 14, h: 22, points: 5, perPiece: 10 } as const;
+/** A spray bottle: five points, and every ten polish one panel of the car in the bay. */
+export const BOTTLE = { w: 14, h: 22, points: 5, perPanel: 10 } as const;
 
-export type Can = { x: number; y: number; id: number; taken: boolean };
+export type Bottle = { x: number; y: number; id: number; taken: boolean };
 
-export function canBox(c: Can): Box {
+export function bottleBox(b: Bottle): Box {
   // Generous: pickups should feel magnetic, never fussy.
-  return { x: c.x - 4, y: c.y - 4, w: CAN.w + 8, h: CAN.h + 8 };
+  return { x: b.x - 4, y: b.y - 4, w: BOTTLE.w + 8, h: BOTTLE.h + 8 };
 }
 
 export function overlaps(a: Box, b: Box) {

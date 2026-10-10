@@ -31,8 +31,9 @@ real photo is missing, so no grid ever has a gap.
   lines shown at each stop; `text` is the longer version for the plain view of the watch
   page; `service` links the stop to a service page; `act` is 1 to 7; `still` replaces the
   bay still on the home page's step tiles (default `acts/<slug>.jpg`).
-- `work.json`: before and after pairs with a title, the service, the vehicle and a caption.
-  The featured pair (or the first) becomes the slider on the home page.
+- `work.json`: photos of real jobs, with a title, optional service and vehicle, and a caption.
+  A `before` photo turns the entry into a slider; without it the `after` photo stands alone.
+  Featured work (or the first) appears on the home page.
 - `reviews.json`: reviews Danny is happy to quote, with the source and a date. The home
   page shows three, featured first, and hides the section while there are none.
 - `pages.json`: heading, description and intro text per page, plus the home headline,

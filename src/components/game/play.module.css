@@ -1,0 +1,553 @@
+/* Bucket Run: the stage, the cards between runs, the controls, and the notes below. */
+
+.page {
+  /* Clear the fixed header. */
+  padding-top: 80px;
+}
+
+/* ---------- the game ---------- */
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100svh - 80px);
+  min-height: 480px;
+  max-height: 880px;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: 8px 24px 24px;
+}
+
+.frame {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--color-bone) 10%, transparent);
+  border-radius: 16px;
+  background: var(--color-ink-2);
+}
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--color-ink);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  outline: none;
+}
+
+.canvas:focus-visible {
+  outline: 2px solid var(--color-accent-lit);
+  outline-offset: -3px;
+}
+
+/* ---------- cards: title, paused, run over ---------- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  /* Taps that miss the buttons fall through to the canvas, which starts or jumps. */
+  pointer-events: none;
+  background: radial-gradient(90% 75% at 50% 50%, rgb(6 8 15 / 0.86), rgb(6 8 15 / 0.55) 65%, rgb(6 8 15 / 0.25));
+  animation: overlay-in 200ms var(--ease-out-quint);
+}
+
+.shell[data-phase="title"] .overlay {
+  background: radial-gradient(62% 58% at 50% 50%, rgb(6 8 15 / 0.88), rgb(6 8 15 / 0.5) 68%, rgb(6 8 15 / 0.12));
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: min(46rem, 100%);
+  text-align: center;
+}
+
+.card button {
+  pointer-events: auto;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 7.5vw, 6rem);
+  font-weight: 800;
+  font-stretch: 125%;
+  line-height: 0.86;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 800;
+  font-stretch: 112%;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.lede {
+  max-width: 30rem;
+  margin-top: 18px;
+  font-size: clamp(15px, 1.35vw, 18px);
+  line-height: 1.5;
+  color: color-mix(in oklab, var(--color-bone) 82%, transparent);
+  text-wrap: balance;
+}
+
+.loading {
+  font-size: 15px;
+  color: color-mix(in oklab, var(--color-bone) 70%, transparent);
+}
+
+.play,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 56px;
+  margin-top: 28px;
+  padding: 14px 34px;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  transition:
+    transform 160ms var(--ease-out-quint),
+    background-color 160ms,
+    border-color 160ms;
+}
+
+.play {
+  background: var(--color-accent);
+  color: white;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 12px 32px -10px rgb(34 71 214 / 0.75);
+}
+
+.play:hover {
+  background: #2f55e5;
+}
+
+.secondary {
+  padding-inline: 24px;
+  border: 1px solid color-mix(in oklab, var(--color-bone) 26%, transparent);
+  background: rgb(6 8 15 / 0.45);
+  color: var(--color-bone);
+}
+
+.secondary:hover {
+  border-color: color-mix(in oklab, var(--color-bone) 50%, transparent);
+}
+
+.play:active,
+.secondary:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.actions .play,
+.actions .secondary {
+  margin-top: 0;
+}
+
+.hint {
+  margin-top: 14px;
+  font-size: 13px;
+  color: color-mix(in oklab, var(--color-bone) 64%, transparent);
+}
+
+.best {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent-lit);
+}
+
+.kicker {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent-lit);
+}
+
+.score {
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-size: clamp(3.75rem, 10vw, 6.5rem);
+  font-weight: 800;
+  font-stretch: 112%;
+  line-height: 0.88;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums;
+}
+
+.score span {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  font-stretch: 100%;
+  letter-spacing: 0;
+  color: color-mix(in oklab, var(--color-bone) 60%, transparent);
+}
+
+.stats {
+  margin-top: 14px;
+  font-size: 15px;
+  color: color-mix(in oklab, var(--color-bone) 78%, transparent);
+}
+
+/* Key caps, wherever they appear. */
+.hint kbd,
+.keys kbd,
+.controls kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in oklab, var(--color-bone) 24%, transparent);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: rgb(238 241 246 / 0.05);
+  font: 600 12px/1 var(--font-sans);
+  color: var(--color-bone);
+}
+
+.hint kbd {
+  margin-inline: 4px;
+}
+
+.fine {
+  display: inline;
+}
+
+.coarse {
+  display: none;
+}
+
+/* ---------- the dock: key hints and tools; on touch screens, Duck and Jump ---------- */
+
+.dock {
+  display: grid;
+  flex: 0 0 auto;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "keys tools";
+  align-items: center;
+  gap: 16px;
+  min-height: 68px;
+  padding: 12px 14px 12px 22px;
+  border-top: 1px solid color-mix(in oklab, var(--color-bone) 8%, transparent);
+  background: var(--color-ink-2);
+}
+
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  grid-area: keys;
+  gap: 8px 26px;
+  font-size: 14px;
+  color: color-mix(in oklab, var(--color-bone) 74%, transparent);
+}
+
+.keys span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tools {
+  display: flex;
+  grid-area: tools;
+  gap: 8px;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in oklab, var(--color-bone) 16%, transparent);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-bone);
+  transition:
+    border-color 160ms,
+    background-color 160ms;
+}
+
+.tool:hover {
+  border-color: color-mix(in oklab, var(--color-bone) 40%, transparent);
+  background: rgb(238 241 246 / 0.05);
+}
+
+.tool:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.jump,
+.duck {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 68px;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 700;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform 80ms;
+}
+
+.jump {
+  grid-area: jump;
+  background: var(--color-accent);
+  color: white;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 4px 0 #142d86;
+}
+
+.duck {
+  grid-area: duck;
+  border: 1px solid color-mix(in oklab, var(--color-bone) 22%, transparent);
+  background: rgb(238 241 246 / 0.06);
+  color: var(--color-bone);
+  box-shadow: 0 4px 0 rgb(0 0 0 / 0.5);
+}
+
+.jump[data-held],
+.duck[data-held] {
+  transform: translateY(3px);
+  box-shadow: none;
+}
+
+.jump:disabled,
+.duck:disabled {
+  opacity: 0.5;
+}
+
+/* Touch screens: big thumb buttons either side, the tools quietly between them. */
+@media (pointer: coarse) {
+  .fine,
+  .keys {
+    display: none;
+  }
+
+  .coarse {
+    display: inline;
+  }
+
+  .dock {
+    grid-template-columns: 1fr auto 1.35fr;
+    grid-template-areas: "duck tools jump";
+    gap: 12px;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+
+  .jump,
+  .duck {
+    display: flex;
+  }
+
+  .tool {
+    width: 44px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .toolLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* Phones: the game runs edge to edge. */
+@media (max-width: 767px) {
+  .shell {
+    min-height: 500px;
+    padding: 0;
+  }
+
+  .frame {
+    border: 0;
+    border-radius: 0;
+  }
+}
+
+/* Landscape phones: a slimmer dock, and the page can shrink to the screen. */
+@media (max-height: 520px) {
+  .shell {
+    min-height: 0;
+  }
+
+  .dock {
+    min-height: 0;
+    padding-block: 8px calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .jump,
+  .duck {
+    min-height: 52px;
+  }
+}
+
+/* Full screen: the stage covers the page (real full screen where the browser allows it). */
+.shell[data-immersive] {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  height: 100dvh;
+  min-height: 0;
+  max-width: none;
+  max-height: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  background: var(--color-ink);
+}
+
+.shell[data-immersive] .frame {
+  border: 0;
+  border-radius: 0;
+}
+
+/* ---------- below the game ---------- */
+
+.notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 48px;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding: 48px 24px 24px;
+}
+
+.notes h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.notes p {
+  max-width: 42ch;
+  margin-top: 12px;
+  color: color-mix(in oklab, var(--color-bone) 74%, transparent);
+}
+
+.controls {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.controls div {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.controls dt {
+  display: flex;
+  gap: 6px;
+}
+
+.controls dd {
+  color: color-mix(in oklab, var(--color-bone) 80%, transparent);
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+  max-width: 1232px;
+  margin: 32px auto 96px;
+  padding-top: 32px;
+  border-top: 1px solid color-mix(in oklab, var(--color-bone) 10%, transparent);
+}
+
+.ctaLine {
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.ctaActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 1279px) {
+  .cta {
+    margin-inline: 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  .notes {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding-top: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+  }
+
+  .play,
+  .secondary,
+  .jump,
+  .duck {
+    transition: none;
+  }
+}

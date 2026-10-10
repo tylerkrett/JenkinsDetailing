@@ -12,10 +12,10 @@ import { Wordmark } from "./wordmark";
 export async function SiteHeader() {
   const s = await getSettings();
   return (
-    <header className="fixed inset-x-0 top-0 z-40 h-16">
+    <header className="fixed inset-x-0 top-0 z-40 h-20">
       <HeaderSurface />
       <div className="relative mx-auto flex h-full max-w-7xl items-center justify-between px-6">
-        <Wordmark />
+        <Wordmark markClassName="h-16" />
         <div className="flex items-center gap-6">
           <nav aria-label="Primary" className="hidden lg:block">
             <ul className="flex items-center gap-7">

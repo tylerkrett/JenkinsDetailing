@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  BOTTLE,
   OBSTACLES,
   PLAYER,
+  bottleBox,
   createPlayer,
   obstacleBox,
   overlaps,
@@ -68,17 +70,24 @@ void test("a jump pressed just before landing fires on touchdown", () => {
   assert.ok(!p.onGround, "second jump launched from the buffer");
 });
 
-void test("a low pigeon hits a standing cat and misses a ducking one", () => {
-  const pigeon = OBSTACLES.find((d) => d.kind === "pigeonLow")!;
-  const box = obstacleBox({ def: pigeon, x: 0, id: 1 });
+void test("a low kite hits a standing bucket and misses a ducking one", () => {
+  const kite = OBSTACLES.find((d) => d.kind === "kiteLow")!;
+  const box = obstacleBox({ def: kite, x: 0, id: 1 });
   const standing = createPlayer();
   assert.ok(overlaps(playerBox(standing, 0), box));
   setDuck(standing, true);
   assert.ok(!overlaps(playerBox(standing, 0), box));
 });
 
-void test("a high pigeon clears a standing cat", () => {
-  const pigeon = OBSTACLES.find((d) => d.kind === "pigeonHigh")!;
-  const box = obstacleBox({ def: pigeon, x: 0, id: 1 });
+void test("a high kite clears a standing bucket", () => {
+  const kite = OBSTACLES.find((d) => d.kind === "kiteHigh")!;
+  const box = obstacleBox({ def: kite, x: 0, id: 1 });
   assert.ok(!overlaps(playerBox(createPlayer(), 0), box));
+});
+
+void test("bottles are generous to pick up", () => {
+  const b = { x: 100, y: 10, id: 1, taken: false };
+  const box = bottleBox(b);
+  assert.ok(box.w > BOTTLE.w && box.h > BOTTLE.h);
+  assert.ok(overlaps(playerBox(createPlayer(), 100 - PLAYER.w + 6), box), "a near miss still collects");
 });

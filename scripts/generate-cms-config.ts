@@ -201,10 +201,14 @@ const workPresentation: Record<keyof z.infer<typeof workInputSchema>, Presentati
   slug: { label: "Web address", hint: SLUG_HINT },
   service: { label: "Service", hint: "The web address of the service, e.g. `paint-correction`." },
   vehicle: { label: "Vehicle", hint: "Make and model. Optional." },
-  before: { label: "Before photo", hint: "Same angle as the after photo if you can.", extra: PHOTO },
-  after: { label: "After photo", extra: PHOTO },
+  before: {
+    label: "Before photo",
+    hint: "Optional. Same angle as the after photo if you can. Leave empty for a finished-job shot.",
+    extra: PHOTO,
+  },
+  after: { label: "Photo", hint: "The finished job, or the after shot of a pair.", extra: PHOTO },
   caption: { label: "Caption", widget: "text", hint: "What was done, in a sentence or two." },
-  featured: { label: "Featured", hint: "Featured pairs appear on the home page." },
+  featured: { label: "Featured", hint: "Featured work appears on the home page." },
   published: { label: "Show on the site" },
   sortOrder: { label: "Position", extra: { step: 1 } },
 };
@@ -563,13 +567,13 @@ function buildConfig() {
       },
       {
         name: "work",
-        label: "Before and after",
-        icon: "compare",
-        description: "Pairs of photos of real jobs.",
+        label: "Work",
+        icon: "photo_library",
+        description: "Photos of real jobs. Add a before shot if you have one; otherwise the after photo stands alone.",
         media_folder: "/public/photos/work",
         public_folder: "/photos/work",
         files: [
-          rootListFile({ name: "work", label: "Pairs", labelSingular: "Pair", file: "content/work.json", summary: "{{title}}", schema: workInputSchema, presentation: workPresentation }),
+          rootListFile({ name: "work", label: "Jobs", labelSingular: "Job", file: "content/work.json", summary: "{{title}}", schema: workInputSchema, presentation: workPresentation }),
         ],
       },
       {

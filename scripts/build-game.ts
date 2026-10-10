@@ -1,6 +1,6 @@
 /**
  * Builds the offline pieces of the site:
- *   public/offline.html  the Too Street game as one self-contained page, served by the
+ *   public/offline.html  the Bucket Run game as one self-contained page, served by the
  *                        service worker when a navigation cannot reach the network
  *   public/sw.js         the service worker, versioned by a hash of that shell
  *
@@ -23,10 +23,10 @@ const outDir = path.join(root, "public");
 const PLACEHOLDER = `<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex"><title>Jenkins Detailing</title>
-<style>html{background:#07060b;color:#ece7dc;font:15px/1.5 Manrope,system-ui,sans-serif}
+<style>html{background:#06080f;color:#eef1f6;font:15px/1.5 Figtree,system-ui,sans-serif}
 body{min-height:100dvh;display:grid;place-items:center;margin:0;padding:2rem;text-align:center}
-button{font:inherit;color:inherit;background:none;border:0;text-decoration:underline;text-decoration-color:#37c77f;text-underline-offset:5px;cursor:pointer}</style></head>
-<body><div><p>No signal. Too street for the network.</p><p><button onclick="location.reload()">Retry</button></p></div>
+button{font:inherit;color:inherit;background:none;border:0;text-decoration:underline;text-decoration-color:#8fa6ff;text-underline-offset:5px;cursor:pointer}</style></head>
+<body><div><p>No signal. The page will load when you are back online.</p><p><button onclick="location.reload()">Retry</button></p></div>
 <script>addEventListener("online",()=>location.reload())</script></body></html>
 `;
 
@@ -36,7 +36,7 @@ async function bundleEngine(): Promise<string> {
     bundle: true,
     minify: true,
     format: "iife",
-    globalName: "__TooStreet",
+    globalName: "__BucketRun",
     target: ["es2020"],
     platform: "browser",
     write: false,
@@ -45,7 +45,7 @@ async function bundleEngine(): Promise<string> {
   });
   const code = result.outputFiles[0]?.text ?? "";
   // The template calls window.createGame; the bundle exposes the module namespace.
-  return `${code}\nwindow.createGame=(__TooStreet.createGame||__TooStreet.default);`;
+  return `${code}\nwindow.createGame=(__BucketRun.createGame||__BucketRun.default);`;
 }
 
 async function bundleWorker(version: string): Promise<string> {

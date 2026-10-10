@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 /**
  * Jenkins Detailing service worker. Hand written, no workbox: one job is to hand back the offline
- * shell (the Too Street game) when a navigation cannot reach the network, the rest is a
+ * shell (the Bucket Run game) when a navigation cannot reach the network, the rest is a
  * light cache for the static files the site already marks long-lived.
  *
  * Built by scripts/build-game.ts into public/sw.js with __VERSION__ set to a hash of the

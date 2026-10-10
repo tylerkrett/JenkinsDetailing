@@ -5,7 +5,7 @@ import { z } from "zod";
  * image pipeline and the CMS config generator, so the three can never drift.
  *
  * Collections: settings (one object), services, packages, process steps, work
- * (before and after pairs), reviews and page copy. Nothing here is for sale.
+ * (job photos, optionally before and after), reviews and page copy. Nothing here is for sale.
  */
 
 const slug = z
@@ -218,7 +218,8 @@ export const workInputSchema = z.object({
   /** Slug of the service the job was. */
   service: slug.optional(),
   vehicle: z.string().default(""),
-  before: imageFile,
+  /** Optional: with `after`, a before-and-after pair. Without it, a finished-job photo. */
+  before: imageFile.optional(),
   after: imageFile,
   caption: z.string().default(""),
   featured: z.boolean().default(false),
@@ -229,7 +230,7 @@ export const workListInputSchema = z.array(workInputSchema).superRefine(uniqueSl
 
 export const workSchema = workInputSchema
   .omit({ before: true, after: true })
-  .extend({ before: processedImageSchema, after: processedImageSchema });
+  .extend({ before: processedImageSchema.optional(), after: processedImageSchema });
 
 // ---------------------------------------------------------------------------------
 // Reviews

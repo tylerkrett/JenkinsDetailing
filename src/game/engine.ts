@@ -1,23 +1,35 @@
 /**
- * Too Street: the engine. One canvas, no framework. Fixed 60 Hz simulation with
- * interpolated drawing, DPR aware, pauses when the tab hides, cleans up on destroy.
+ * Bucket Run: the engine. One canvas, no framework. A fixed 60 Hz simulation with
+ * interpolated drawing, so it moves smoothly at 30, 60 or 120 frames a second. It caps the
+ * canvas resolution, stops painting when nothing moves or nobody can see it, pauses a run
+ * that scrolls out of view, and tells its host about phase changes (and the score at most
+ * four times a second), never every frame.
  */
 import {
-  createCatPainter,
-  drawCan,
-  drawGrain,
+  PARTICLE,
+  clearParticles,
+  createArt,
+  createParticles,
+  drawBays,
+  drawBottle,
+  drawFacade,
+  drawGround,
+  drawHills,
   drawLamps,
+  drawLightPools,
   drawObstacle,
-  drawPavement,
+  drawParticles,
   drawPlayer,
-  drawPop,
-  drawRoofs,
   drawSky,
-  drawWall,
+  drawTrees,
+  emit,
+  stepParticles,
+  type Fonts,
 } from "./draw";
 import {
-  CAN,
-  canBox,
+  BOTTLE,
+  PLAYER,
+  bottleBox,
   createPlayer,
   obstacleBox,
   overlaps,
@@ -28,98 +40,118 @@ import {
   stepPlayer,
   type PlayerState,
 } from "./entities";
-import { drawHud, drawOver, drawPaused, drawTitle, type Fonts, type HudFx } from "./hud";
+import { drawHud, drawOverCard, drawPausedCard, drawTitleCard, type HudFx } from "./hud";
 import { attachInput } from "./input";
 import { createStorage } from "./storage";
 import { FONT_BODY_FALLBACK, FONT_DISPLAY_FALLBACK, VIEW } from "./theme";
 import type { CreateGame, GameHandle, GamePhase, GameState } from "./types";
 import {
+  baysInView,
   createWorld,
   lampsInView,
-  muralPieces,
-  muralsInView,
+  panelsFor,
   speedFor,
+  startRun,
   stepWorld,
   type WorldState,
 } from "./world";
 
 const STEP = 1 / 60;
-const MAX_STEPS = 3;
+const MAX_STEPS = 4;
 const FREEZE = 0.12;
 const RESTART_LOCKOUT = 0.4;
-
-type Pop = { x: number; y: number; t: number };
+/** How fast the frontage drifts past behind the title. */
+const ATTRACT_SPEED = 70;
+/** Canvas pixel budget, about 2560 x 1400. A bigger box trades a little sharpness for speed. */
+const MAX_PIXELS = 3_600_000;
+const NOTIFY_EVERY = 0.25;
 
 export const createGame: CreateGame = (canvas, options = {}) => {
   const maybeCtx = canvas.getContext("2d", { alpha: false });
-  if (!maybeCtx) throw new Error("Too Street needs a 2D canvas context");
+  if (!maybeCtx) throw new Error("Bucket Run needs a 2D canvas context");
   const ctx: CanvasRenderingContext2D = maybeCtx;
   const reducedMotion =
     options.reducedMotion ??
     (typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const attract = !reducedMotion;
+  const cards = options.cards ?? true;
   const storage = createStorage(options.storageKey);
-  const cat = createCatPainter();
   const fonts = resolveFonts(canvas);
+  const art = createArt(fonts);
 
   if (!canvas.hasAttribute("role")) canvas.setAttribute("role", "img");
   if (!canvas.hasAttribute("aria-label")) {
-    canvas.setAttribute("aria-label", "Too Street, an endless street run. Press space to jump, down to duck.");
+    canvas.setAttribute("aria-label", "Bucket Run, a running game. Space jumps, the down arrow ducks.");
   }
 
   let touch = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
 
-  // Logical view.
-  let scale = 1;
-  let viewW = VIEW.minWidth;
-  let viewH = VIEW.height;
-  let groundY = viewH - 60;
+  // The box in CSS pixels, the device pixel ratio actually used, and the world in logical units.
+  let cssW: number = VIEW.minWidth;
+  let cssH: number = VIEW.height;
+  let viewW: number = VIEW.minWidth;
+  let viewH: number = VIEW.height;
+  let groundY = viewH - 72;
   let playerX: number = VIEW.playerX;
+  let compact = false;
 
-  const baseSeed = options.seed ?? Math.floor(Math.random() * 2 ** 31);
-  let runIndex = 0;
-  let world: WorldState = createWorld(baseSeed, viewW);
+  const world: WorldState = createWorld(options.seed ?? Math.floor(Math.random() * 2 ** 31), viewW);
   let player: PlayerState = createPlayer();
   let prevPlayerY = 0;
+  const particles = createParticles();
+  const lamps: number[] = [];
+  const bays: number[] = [];
 
   const state: GameState = {
     phase: "title",
     score: 0,
     best: storage.readBest(),
     newBest: false,
-    cans: 0,
-    neighbourhood: world.neighbourhood,
+    bottles: 0,
+    stage: world.stage,
     plays: storage.readPlays(),
   };
 
-  const fx: HudFx = { scoreFlashAt: -1, bestFlashAt: -1, pieceFlashAt: -1 };
+  const fx: HudFx = { scoreFlashAt: -1, bestFlashAt: -1, panelFlashAt: -1, stageAt: -1 };
   let lastHundred = 0;
-  let lastPieces = 0;
-  let pops: Pop[] = [];
-  let grainPulse = 0;
+  let lastPanels = 0;
   let freeze = 0;
   let overAt = 0;
   let elapsed = 0;
-  let lastNotify = 0;
-  let lastNotifiedScore = -1;
+  let lastNotify = -1;
+  let foamClock = 0;
+  let liveParticles = 0;
+  /** Something changed that needs painting even though nothing moves. */
+  let dirty = true;
+  /** On screen, and in a tab that is showing. */
+  let visible = true;
+  let onScreen = true;
 
   /* ---------- sizing ---------- */
 
   function resize() {
-    const cw = canvas.clientWidth || VIEW.minWidth;
-    const ch = canvas.clientHeight || VIEW.height;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const pw = Math.round(cw * dpr);
-    const ph = Math.round(ch * dpr);
+    cssW = canvas.clientWidth || VIEW.minWidth;
+    cssH = canvas.clientHeight || VIEW.height;
+    let dpr = Math.min(2, window.devicePixelRatio || 1);
+    const budget = Math.sqrt(MAX_PIXELS / (cssW * cssH));
+    if (dpr > budget) dpr = Math.max(1, budget);
+    const pw = Math.round(cssW * dpr);
+    const ph = Math.round(cssH * dpr);
     if (canvas.width !== pw) canvas.width = pw;
     if (canvas.height !== ph) canvas.height = ph;
-    // Narrow or portrait boxes (phones) frame the street from the width so the cat stays
-    // legible and the wall and rooftops fill the box; wide boxes get the long view.
-    const narrow = cw < 600 || ch > cw;
-    scale = narrow ? cw / VIEW.narrowWidth : Math.min(cw / VIEW.minWidth, ch / VIEW.height);
-    viewW = cw / scale;
-    viewH = ch / scale;
+    // Narrow or portrait boxes (phones) frame the street from the width so the bucket stays
+    // legible and the sky fills the box; wide boxes get the long view.
+    const narrow = cssW < 600 || cssH > cssW;
+    compact = cssW < 520;
+    const scale = narrow ? cssW / VIEW.narrowWidth : Math.min(cssW / VIEW.minWidth, cssH / VIEW.height);
+    viewW = cssW / scale;
+    viewH = cssH / scale;
     groundY = viewH - Math.max(56, viewH * (narrow ? 0.16 : 0.2));
     playerX = narrow ? VIEW.playerXNarrow : VIEW.playerX;
+    art.setResolution(pw / viewW);
+    // A wider box needs more frontage built ahead.
+    stepWorld(world, 0, 0, viewW, false);
+    dirty = true;
     draw(1);
   }
 
@@ -127,39 +159,36 @@ export const createGame: CreateGame = (canvas, options = {}) => {
 
   function notify(force = false) {
     if (!options.onState) return;
-    const now = elapsed;
-    if (!force && now - lastNotify < 0.2 && state.score === lastNotifiedScore) return;
-    lastNotify = now;
-    lastNotifiedScore = state.score;
+    if (!force && elapsed - lastNotify < NOTIFY_EVERY) return;
+    lastNotify = elapsed;
     options.onState({ ...state });
   }
 
   function setPhase(phase: GamePhase) {
     if (state.phase === phase) return;
     state.phase = phase;
+    dirty = true;
     notify(true);
   }
 
-  function resetRun() {
-    world = createWorld(baseSeed + runIndex * 7919, viewW);
-    runIndex++;
+  function begin() {
+    // The run starts where the frontage has drifted to, so nothing jumps.
+    startRun(world, viewW);
     player = createPlayer();
     prevPlayerY = 0;
+    clearParticles(particles);
     state.score = 0;
-    state.cans = 0;
+    state.bottles = 0;
     state.newBest = false;
-    state.neighbourhood = world.neighbourhood;
+    state.stage = world.stage;
     fx.scoreFlashAt = -1;
     fx.bestFlashAt = -1;
-    fx.pieceFlashAt = -1;
+    fx.panelFlashAt = -1;
+    fx.stageAt = 0;
     lastHundred = 0;
-    lastPieces = 0;
-    pops = [];
+    lastPanels = 0;
     freeze = 0;
-  }
-
-  function begin() {
-    resetRun();
+    foamClock = 0;
     setPhase("running");
     // A run starts in the air: the press that started it is also the first jump.
     pressJump(player);
@@ -169,12 +198,26 @@ export const createGame: CreateGame = (canvas, options = {}) => {
   function die() {
     player.dead = true;
     freeze = FREEZE;
-    grainPulse = 1;
     state.plays += 1;
     storage.writePlays(state.plays);
     if (state.score > state.best) {
       state.best = state.score;
       storage.writeBest(state.best);
+    }
+    // The bucket tips and the foam goes everywhere.
+    const bx = world.distance + playerX + PLAYER.w / 2;
+    const by = groundY - player.y - PLAYER.h * 0.8;
+    for (let i = 0; i < 16; i++) {
+      emit(
+        particles,
+        PARTICLE.foam,
+        bx,
+        by,
+        40 + Math.random() * 180,
+        -120 - Math.random() * 220,
+        0.7 + Math.random() * 0.6,
+        2 + Math.random() * 3,
+      );
     }
     try {
       navigator.vibrate?.(30);
@@ -189,11 +232,17 @@ export const createGame: CreateGame = (canvas, options = {}) => {
     elapsed += dt;
     if (fx.scoreFlashAt >= 0) fx.scoreFlashAt += dt;
     if (fx.bestFlashAt >= 0) fx.bestFlashAt += dt;
-    if (fx.pieceFlashAt >= 0) fx.pieceFlashAt += dt;
-    grainPulse = Math.max(0, grainPulse - dt * 3);
-    for (const p of pops) p.t += dt;
-    pops = pops.filter((p) => p.t < 0.3);
+    if (fx.panelFlashAt >= 0) fx.panelFlashAt += dt;
+    if (fx.stageAt >= 0) fx.stageAt += dt;
+    liveParticles = stepParticles(particles, dt, groundY + 2);
 
+    if (state.phase === "title") {
+      if (attract) {
+        stepWorld(world, dt, ATTRACT_SPEED, viewW, false);
+        stepPlayer(player, dt, ATTRACT_SPEED);
+      }
+      return;
+    }
     if (state.phase === "over") {
       stepPlayer(player, dt, 0);
       return;
@@ -214,22 +263,43 @@ export const createGame: CreateGame = (canvas, options = {}) => {
     stepPlayer(player, dt, speed);
     stepWorld(world, dt, speed, viewW);
 
+    // Foam flicks off the bucket as it runs.
+    foamClock += dt;
+    if (player.onGround && !player.ducking && foamClock > 0.11) {
+      foamClock = 0;
+      emit(
+        particles,
+        PARTICLE.foam,
+        world.distance + playerX + PLAYER.w * 0.3,
+        groundY - PLAYER.h * 0.86,
+        -30 - Math.random() * 50,
+        -90 - Math.random() * 90,
+        0.45,
+        1.3 + Math.random() * 1.2,
+      );
+    }
+
     // Pickups. The player box lives in world x, like everything it can touch.
     const pb = playerBox(player, world.distance + playerX);
-    const prevCans = world.cans;
-    for (const c of world.pickups) {
-      if (c.taken) continue;
-      if (overlaps(pb, canBox(c))) {
-        c.taken = true;
-        world.cans += 1;
-        pops.push({ x: c.x - world.distance + CAN.w / 2, y: groundY - c.y - CAN.h / 2, t: 0 });
+    const before = world.bottles;
+    for (const b of world.pickups) {
+      if (b.taken || !overlaps(pb, bottleBox(b))) continue;
+      b.taken = true;
+      world.bottles += 1;
+      const cx = b.x + BOTTLE.w / 2;
+      const cy = groundY - b.y - BOTTLE.h / 2;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        emit(particles, PARTICLE.sparkle, cx, cy, Math.cos(a) * 90 + speed * 0.6, Math.sin(a) * 90, 0.38, 3);
       }
     }
     // Score first, so a death on this very step banks the points that were earned.
-    state.score = world.score + (world.cans - prevCans) * CAN.points;
-    state.cans = world.cans;
-    state.neighbourhood = world.neighbourhood;
-    // Collisions.
+    state.score = world.score + (world.bottles - before) * BOTTLE.points;
+    state.bottles = world.bottles;
+    if (world.stage !== state.stage) {
+      state.stage = world.stage;
+      fx.stageAt = 0;
+    }
     for (const o of world.obstacles) {
       if (o.x > world.distance + playerX + 80) break;
       if (overlaps(pb, obstacleBox(o))) {
@@ -245,11 +315,12 @@ export const createGame: CreateGame = (canvas, options = {}) => {
     if (!state.newBest && state.best > 0 && state.score > state.best) {
       state.newBest = true;
       fx.bestFlashAt = 0;
+      notify(true);
     }
-    const pieces = muralPieces(world.cans);
-    if (pieces > lastPieces) {
-      lastPieces = pieces;
-      fx.pieceFlashAt = 0;
+    const panels = panelsFor(world.bottles);
+    if (panels > lastPanels) {
+      lastPanels = panels;
+      fx.panelFlashAt = 0;
     }
     notify();
   }
@@ -257,44 +328,52 @@ export const createGame: CreateGame = (canvas, options = {}) => {
   /* ---------- drawing ---------- */
 
   function draw(alpha: number) {
-    ctx.setTransform(canvas.width / viewW, 0, 0, canvas.height / viewH, 0, 0);
+    const k = canvas.width / viewW;
+    ctx.setTransform(k, 0, 0, k, 0, 0);
     const running = state.phase === "running" && freeze <= 0;
-    const distance = running ? world.prevDistance + (world.distance - world.prevDistance) * alpha : world.distance;
+    const moving = running || (state.phase === "title" && attract);
+    const d = moving ? world.prevDistance + (world.distance - world.prevDistance) * alpha : world.distance;
     const py = running ? prevPlayerY + (player.y - prevPlayerY) * alpha : player.y;
     const t = elapsed;
+    const g = groundY;
+    // Under reduced motion the sky and hills hold still; only the street itself moves.
+    const far = reducedMotion ? 0 : d;
 
-    drawSky(ctx, world, viewW, viewH, groundY, t);
-    if (!reducedMotion) {
-      drawRoofs(ctx, world.far, distance, groundY, viewW, false);
-      drawRoofs(ctx, world.near, distance, groundY, viewW, true);
-    } else {
-      // Under reduced motion the skyline stands still, so the parallax cannot pull the eye.
-      drawRoofs(ctx, world.far, 0, groundY, viewW, false);
-    }
-    drawWall(ctx, world, groundY, viewW, muralsInView(distance, viewW), muralPieces(world.cans), cat, distance);
-    drawLamps(ctx, lampsInView(distance, viewW), groundY, distance);
-    drawPavement(ctx, groundY, viewW, viewH, distance, world.chalk, fonts.display);
-
-    for (const c of world.pickups) {
-      if (c.taken) continue;
-      const x = c.x - distance;
-      if (x > viewW || x + CAN.w < 0) continue;
-      drawCan(ctx, c, x, groundY, t);
+    drawSky(ctx, art, viewW, g, world.stars, far);
+    drawHills(ctx, viewW, g, far, world.hills);
+    drawTrees(ctx, viewW, g, far, world.hills[2]);
+    drawFacade(ctx, art, world.facade, d, g, viewW);
+    const panels = panelsFor(world.bottles);
+    drawBays(ctx, art, baysInView(d, viewW, bays), panels, d, g, t);
+    drawGround(ctx, viewW, viewH, g, d);
+    drawLightPools(ctx, art, bays, lampsInView(d, viewW, lamps), d, g);
+    drawLamps(ctx, art, lamps, g, d);
+    for (const b of world.pickups) {
+      if (b.taken) continue;
+      const x = b.x - d;
+      if (x > viewW || x + BOTTLE.w < 0) continue;
+      drawBottle(ctx, art, b, x, g, t);
     }
     for (const o of world.obstacles) {
-      const x = o.x - distance;
+      const x = o.x - d;
       if (x > viewW || x + o.def.w < 0) continue;
-      drawObstacle(ctx, o, x, groundY, t);
+      drawObstacle(ctx, o, x, g, t);
     }
-    for (const p of pops) drawPop(ctx, p.x, p.y, p.t / 0.3);
-    drawPlayer(ctx, player, playerX, py, groundY, cat);
+    drawParticles(ctx, particles, d);
+    drawPlayer(ctx, player, playerX, py, g, t);
 
-    if (!reducedMotion) drawGrain(ctx, viewW, viewH, 0.045 + grainPulse * 0.16, Math.floor(t * 60) * 37);
-
-    drawHud(ctx, viewW, state, fonts, fx, t, touch);
-    if (state.phase === "title") drawTitle(ctx, viewW, viewH, groundY, state, fonts, touch);
-    else if (state.phase === "paused") drawPaused(ctx, viewW, viewH, groundY, fonts, touch);
-    else if (state.phase === "over") drawOver(ctx, viewW, viewH, groundY, state, fonts, touch, elapsed - overAt);
+    // The HUD and cards are laid out in CSS pixels.
+    ctx.setTransform(canvas.width / cssW, 0, 0, canvas.height / cssH, 0, 0);
+    // A host that draws its own run-over card shows the result there, so the HUD steps aside.
+    if (state.phase === "running" || state.phase === "paused" || (cards && state.phase === "over")) {
+      drawHud(ctx, cssW, state, fonts, fx, panels, compact);
+    }
+    if (cards) {
+      if (state.phase === "title") drawTitleCard(ctx, cssW, cssH, state, fonts, touch);
+      else if (state.phase === "paused") drawPausedCard(ctx, cssW, cssH, fonts, touch);
+      else if (state.phase === "over") drawOverCard(ctx, cssW, cssH, state, fonts, touch, elapsed - overAt);
+    }
+    dirty = false;
   }
 
   /* ---------- loop ---------- */
@@ -304,9 +383,21 @@ export const createGame: CreateGame = (canvas, options = {}) => {
   let acc = 0;
   let destroyed = false;
 
+  /** Whether anything on screen is moving this frame. */
+  function animating() {
+    if (state.phase === "running") return true;
+    if (state.phase === "title") return attract;
+    if (state.phase === "over") return elapsed - overAt < 1 || liveParticles > 0 || (cards && elapsed - overAt < 0.5);
+    return false;
+  }
+
   function frame(now: number) {
     if (destroyed) return;
     raf = requestAnimationFrame(frame);
+    if (!visible) {
+      last = 0;
+      return;
+    }
     if (!last) last = now;
     let dt = (now - last) / 1000;
     last = now;
@@ -319,7 +410,7 @@ export const createGame: CreateGame = (canvas, options = {}) => {
       steps++;
     }
     if (steps === MAX_STEPS) acc = 0;
-    draw(acc / STEP);
+    if (animating() || dirty) draw(acc / STEP);
   }
 
   /* ---------- input ---------- */
@@ -368,35 +459,56 @@ export const createGame: CreateGame = (canvas, options = {}) => {
       ? () => undefined
       : attachInput(
           canvas,
-          {
-            press: onPress,
-            release: onRelease,
-            duck: onDuck,
-            pause: onPause,
-            any: () => undefined,
-          },
+          { press: onPress, release: onRelease, duck: onDuck, pause: onPause, any: () => undefined },
           { isActive },
         );
 
   const onPointerType = (e: PointerEvent) => {
-    touch = e.pointerType !== "mouse";
+    const next = e.pointerType !== "mouse";
+    if (next !== touch) {
+      touch = next;
+      dirty = true;
+    }
   };
   canvas.addEventListener("pointerdown", onPointerType, { passive: true });
 
-  const onVisibility = () => {
-    if (document.hidden && state.phase === "running") handle.pause();
-  };
+  // Nobody watching: stop painting, and pause a run rather than let it play out unseen.
+  function updateVisible() {
+    const next = onScreen && !document.hidden;
+    if (next === visible) return;
+    visible = next;
+    if (!visible && state.phase === "running") handle.pause();
+    dirty = true;
+  }
+  const onVisibility = () => updateVisible();
   document.addEventListener("visibilitychange", onVisibility);
+  const io =
+    typeof IntersectionObserver !== "undefined"
+      ? new IntersectionObserver(
+          (entries) => {
+            const entry = entries[entries.length - 1];
+            if (!entry) return;
+            onScreen = entry.isIntersecting;
+            updateVisible();
+          },
+          { threshold: 0.15 },
+        )
+      : null;
+  io?.observe(canvas);
 
   const onResize = () => resize();
   window.addEventListener("resize", onResize);
   const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(onResize) : null;
   ro?.observe(canvas);
 
-  // Web fonts arrive after the first frame; the loop repaints, so a load only needs to happen.
+  // Web fonts arrive after the first frame; once they do, repaint the sign and the HUD in them.
   if (typeof document !== "undefined" && "fonts" in document) {
-    void document.fonts.load(`700 42px ${fonts.display}`).catch(() => undefined);
-    void document.fonts.load(`500 12px ${fonts.body}`).catch(() => undefined);
+    void Promise.all([document.fonts.load(`800 21px ${fonts.display}`), document.fonts.load(`600 12px ${fonts.body}`)])
+      .then(() => {
+        art.invalidate();
+        dirty = true;
+      })
+      .catch(() => undefined);
   }
 
   /* ---------- handle ---------- */
@@ -416,16 +528,18 @@ export const createGame: CreateGame = (canvas, options = {}) => {
       setPhase("running");
     },
     restart() {
-      if (state.phase === "title" || state.phase === "over") begin();
-      else if (state.phase === "paused" || state.phase === "running") {
-        resetRun();
-        setPhase("running");
-      }
+      begin();
     },
     jump() {
       onPress();
-      // A programmatic jump has no release, so treat it as a full hold.
+      // A programmatic tap has no release, so it counts as a full hold.
       inputHeld = false;
+    },
+    press() {
+      onPress();
+    },
+    release() {
+      onRelease();
     },
     duck(down) {
       onDuck(down);
@@ -440,6 +554,7 @@ export const createGame: CreateGame = (canvas, options = {}) => {
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("resize", onResize);
       ro?.disconnect();
+      io?.disconnect();
     },
   };
 
@@ -455,13 +570,12 @@ export const createGame: CreateGame = (canvas, options = {}) => {
  * offline page and anything else fall back to the named fonts.
  */
 function resolveFonts(canvas: HTMLCanvasElement): Fonts {
-  const fromData = { display: canvas.dataset.fontDisplay, body: canvas.dataset.fontBody };
-  let display = fromData.display;
-  let body = fromData.body;
+  let display = canvas.dataset.fontDisplay;
+  let body = canvas.dataset.fontBody;
   try {
     const cs = getComputedStyle(canvas);
-    display ??= cs.getPropertyValue("--font-chakra").trim() || undefined;
-    body ??= cs.getPropertyValue("--font-manrope").trim() || undefined;
+    display ??= cs.getPropertyValue("--font-archivo").trim() || undefined;
+    body ??= cs.getPropertyValue("--font-figtree").trim() || undefined;
   } catch {
     // Detached canvas: fall through to the named fonts.
   }

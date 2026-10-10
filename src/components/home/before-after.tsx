@@ -4,10 +4,10 @@ import { ArrowsHorizontal } from "@phosphor-icons/react";
 import { useId, useState } from "react";
 
 import { Photo } from "~/components/site/photo";
-import type { WorkPair } from "~/lib/content";
+import type { ProcessedImage, WorkPair } from "~/lib/content";
 
 type Props = {
-  pair: WorkPair;
+  pair: WorkPair & { before: ProcessedImage };
   /** How wide the slider renders; full container width by default. */
   sizes?: string;
 };
