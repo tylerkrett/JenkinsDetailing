@@ -75,6 +75,24 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
     [],
   );
   const rubber = useMemo(() => new MeshStandardMaterial({ color: "#15161a", roughness: 0.92, metalness: 0 }), []);
+  /**
+   * Tinted, mirror-smooth glass. The model's own glass refracts (transmission), and one
+   * refracting material makes the renderer draw the whole scene a second time, every
+   * frame, to have something to bend: double the draw calls for five windows.
+   */
+  const glass = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: "#141b28",
+        roughness: 0.04,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.5,
+        envMapIntensity: 1.8,
+        depthWrite: false,
+      }),
+    [],
+  );
   /** The underside and running gear: matte, grimy, never a mirror. */
   const chassis = useMemo(() => new MeshStandardMaterial({ color: "#2a2c30", roughness: 0.88, metalness: 0.25 }), []);
   /** Foam and coating haze as shells over the paint, driven by the sweeps. */
@@ -118,11 +136,12 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
     () => () => {
       paint.dispose();
       rubber.dispose();
+      glass.dispose();
       chassis.dispose();
       foam.dispose();
       haze.dispose();
     },
-    [paint, rubber, chassis, foam, haze],
+    [paint, rubber, glass, chassis, foam, haze],
   );
 
   // Prepare the scene once: paint, shadows, the floor offset, and the movable parts.
@@ -151,12 +170,17 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
           replaced.push(m);
           return chassis;
         }
+        if ((m as MeshPhysicalMaterial).transmission > 0) {
+          replaced.push(m);
+          return glass;
+        }
         return m;
       });
       o.material = Array.isArray(o.material) ? next : next[0]!;
     });
     for (const m of replaced) m.dispose();
     // Shells: the same geometry again over every painted panel, for foam and haze.
+    const shells = { foam: [] as Mesh[], haze: [] as Mesh[] };
     for (const mesh of painted) {
       for (const mat of [foam, haze]) {
         const shell = new Mesh(mesh.geometry, mat);
@@ -165,7 +189,9 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
         shell.scale.copy(mesh.scale);
         shell.renderOrder = mat === foam ? 2 : 1;
         shell.frustumCulled = false;
+        shell.visible = false;
         mesh.parent?.add(shell);
+        (mat === foam ? shells.foam : shells.haze).push(shell);
       }
     }
 
@@ -206,11 +232,12 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
     return {
       wheels: wheels.map((w) => ({ node: w, rest: w.position.clone(), quat: w.quaternion.clone() })),
       door: door ? { node: door, quat: door.quaternion.clone() } : null,
+      shells,
       lamps,
       radius,
       length: box.max.z - box.min.z,
     };
-  }, [gltf.scene, paint, rubber, chassis, foam, haze]);
+  }, [gltf.scene, paint, rubber, glass, chassis, foam, haze]);
 
   useFrame((_, dt) => {
     const g = root.current;
@@ -228,6 +255,11 @@ export function Car({ mobile, frame, driveFromZ }: Props) {
     uniforms.haze.uSweep.value = f.hazeSweep;
     tickShell(foam, dt);
     tickShell(haze, dt);
+    // The shells only draw while there is foam or coating on the paint: two acts of seven.
+    const foamOn = f.foam > 0.001;
+    const hazeOn = f.haze > 0.001;
+    for (const s of parts.shells.foam) s.visible = foamOn;
+    for (const s of parts.shells.haze) s.visible = hazeOn;
     const drive = driveFromZ * (1 - f.driveIn);
     g.position.set(f.x, f.lift * BAY.liftHeight, drive);
     g.rotation.y = f.yaw;

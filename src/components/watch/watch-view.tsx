@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { LoadCover } from "~/components/scene/load-cover";
 import type { ProcessStep } from "~/lib/content";
+import { prefetchCar } from "~/lib/scene/assets";
 import { detectSceneSupport } from "~/lib/scene/capabilities";
 import { VIEW_COOKIE, VIEW_MAX_AGE, type View } from "~/lib/view";
 
@@ -50,6 +51,11 @@ export function WatchView({ saved, saveData, steps, headline, plain, children }:
   }, [saveData]);
 
   const immersive = supported === true && choice === "3d";
+
+  // The 3D code and the car download side by side, not one after the other.
+  useEffect(() => {
+    if (immersive) prefetchCar(window.matchMedia("(pointer: coarse)").matches);
+  }, [immersive]);
 
   // A step linked from the home page (?act=3) opens at that step. The scene handles it
   // in 3D; here it is the plain page's anchor.

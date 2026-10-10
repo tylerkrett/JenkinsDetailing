@@ -57,11 +57,14 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 function photoPicker() {
   const used = new Set<string>();
-  return (...candidates: (ProcessedImage | undefined)[]) => {
+  const picker = (...candidates: (ProcessedImage | undefined)[]) => {
     const pick = candidates.find((c) => c && !used.has(c.sizes[0]!.src)) ?? candidates.find(Boolean);
     if (pick) used.add(pick.sizes[0]!.src);
     return pick;
   };
+  /** Every photo already handed out, so the work strip below can skip them. */
+  picker.used = used;
+  return picker;
 }
 
 /** The shop front: photo-led, fast, no WebGL. The scene lives on /watch. */
@@ -78,15 +81,20 @@ export default async function HomePage() {
   const headline = home.headline || settings.promise || SITE_NAME;
   const featured = services.filter((s) => s.featured).slice(0, 4);
   const pair = pairs.find((p) => p.featured && p.before) ?? pairs.find((p) => p.before);
-  const shots = pairs.filter((p) => !p.before).slice(0, 4);
   const reveal = steps.at(-1);
   const story = paragraphs(about.story);
 
   const pick = photoPicker();
   const hero = pick(home.heroImage, settings.portrait, reveal?.still);
   const cards = featured.map((service) => ({ service, image: pick(service.image, service.still) }));
-  const finish = pair || shots.length ? undefined : pick(reveal?.still, reveal?.image);
+  const finish = pair ? undefined : pick(reveal?.still, reveal?.image);
   const unit = pick(settings.unitPhoto, ...steps.map((s) => s.still));
+  // The work strip only shows jobs whose photo is not already on the page above it.
+  const shown = new Set(pick.used);
+  for (const step of steps) {
+    if (step.still) shown.add(step.still.sizes[0]!.src);
+  }
+  const shots = pairs.filter((p) => !p.before && !shown.has(p.after.sizes[0]!.src)).slice(0, 4);
   const unitAlt =
     unit === settings.unitPhoto
       ? `The Jenkins Detailing unit at ${settings.addressLine}, ${settings.town}`

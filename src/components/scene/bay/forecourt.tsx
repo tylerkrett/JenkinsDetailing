@@ -738,7 +738,10 @@ export function Forecourt({ mobile }: Props) {
             <boxGeometry args={[0.26, 0.16, 0.18]} />
             <meshBasicMaterial color={LAMP_HEAD} toneMapped={false} />
           </mesh>
-          <pointLight color={SODIUM} intensity={9} distance={12} decay={2} position={[0, -0.2, 0.5]} />
+          {/* Only the nearest carries a real light; each one costs every lit pixel. */}
+          {i === 0 ? (
+            <pointLight color={SODIUM} intensity={9} distance={12} decay={2} position={[0, -0.2, 0.5]} />
+          ) : null}
         </group>
       ))}
 

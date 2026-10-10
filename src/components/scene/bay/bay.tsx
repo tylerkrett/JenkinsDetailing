@@ -1,6 +1,6 @@
 "use client";
 
-import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import { Environment, Lightformer } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import { Color, Fog, type Group, type Mesh, type SpotLight } from "three";
@@ -33,7 +33,10 @@ import { current } from "~/lib/scene/enter";
 import { resetFx } from "~/lib/scene/fx";
 import { useScene } from "~/lib/scene/store";
 
+import { Batched } from "../batched";
+import { Warmup } from "../warmup";
 import { Car, type CarFrame } from "./car";
+import { CarShadow } from "./car-shadow";
 import { Decor } from "./decor";
 import { Exterior } from "./exterior";
 import { type ActFrame, Process } from "./process";
@@ -285,6 +288,8 @@ export function Bay({ mobile }: Props) {
         decay={2}
       />
 
+      {/* Everything that never moves, merged into a few dozen draw calls (see Batched). */}
+      <Batched>
       {/* Floor: the tiles inside. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[W * 2, L]} />
@@ -294,17 +299,6 @@ export function Bay({ mobile }: Props) {
           metalness={0.05}
         />
       </mesh>
-      {!mobile ? (
-        <ContactShadows
-          position={[0, 0.01, 0]}
-          scale={[8, 12]}
-          blur={2.2}
-          opacity={0.6}
-          far={1.6}
-          resolution={512}
-          frames={Infinity}
-        />
-      ) : null}
 
       {/* Walls, ceiling and the back. */}
       <mesh position={[-W, H / 2, 0]}>
@@ -424,26 +418,6 @@ export function Bay({ mobile }: Props) {
       {/* Everything beyond the shutter: the forecourt, the town, the sky, the rain. */}
       <Exterior mobile={mobile} />
 
-      {/* The car. The primitive stand-in shows while the model streams in. */}
-      <Suspense
-        fallback={
-          <group ref={car} position={[0, 0, DRIVE_FROM_Z]}>
-            <mesh position={[0, 0.55, 0]}>
-              <boxGeometry args={[CAR.width, 0.6, CAR.length]} />
-              <meshPhysicalMaterial
-                color="#1b2f86"
-                roughness={0.35}
-                metalness={0.6}
-                clearcoat={0.6}
-              />
-            </mesh>
-          </group>
-        }
-      >
-        <Car mobile={mobile} frame={carFrame} driveFromZ={DRIVE_FROM_Z} />
-      </Suspense>
-      <Process act={actFrame} car={carFrame} mobile={mobile} />
-
       {/* The two-post lift: posts either side, arms swung under the sills. */}
       {[-1, 1].map((sx) => (
         <group key={sx}>
@@ -466,6 +440,31 @@ export function Bay({ mobile }: Props) {
         </group>
       ))}
       <LimeMarker />
+      </Batched>
+
+      <CarShadow frame={carFrame} driveFromZ={DRIVE_FROM_Z} />
+
+      {/* The car. The primitive stand-in shows while the model streams in. Once it is in,
+          Warmup readies every shader and texture before the preloader lifts. */}
+      <Suspense
+        fallback={
+          <group ref={car} position={[0, 0, DRIVE_FROM_Z]}>
+            <mesh position={[0, 0.55, 0]}>
+              <boxGeometry args={[CAR.width, 0.6, CAR.length]} />
+              <meshPhysicalMaterial
+                color="#1b2f86"
+                roughness={0.35}
+                metalness={0.6}
+                clearcoat={0.6}
+              />
+            </mesh>
+          </group>
+        }
+      >
+        <Car mobile={mobile} frame={carFrame} driveFromZ={DRIVE_FROM_Z} />
+        <Warmup />
+      </Suspense>
+      <Process act={actFrame} car={carFrame} mobile={mobile} />
     </group>
   );
 }

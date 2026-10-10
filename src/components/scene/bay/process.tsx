@@ -49,6 +49,7 @@ export function Process({ act, car, mobile }: Props) {
   const spinning = useRef(0);
   const lightBar = useRef<Group>(null);
   const workLight = useRef<PointLight>(null);
+  const barLight = useRef<PointLight>(null);
   const arms = useRef<(Mesh | null)[]>([]);
   const aim = useMemo(() => new Vector3(), []);
 
@@ -75,6 +76,7 @@ export function Process({ act, car, mobile }: Props) {
     cf.chassisDirt = a < 2 ? 1 : a === 2 ? 1 : 0;
     cf.chassisSweep = a === 2 ? unlerp(0.4, 0.8, d) : a > 2 ? 1 : 0;
     if (lightBar.current) lightBar.current.visible = false;
+    if (barLight.current) barLight.current.intensity = 0;
     if (workLight.current) workLight.current.intensity = 0;
 
     /** Point the lance from `hx,hy,hz` at `target`; the nozzle is 0.75 m along the wand. */
@@ -139,6 +141,10 @@ export function Process({ act, car, mobile }: Props) {
         lightBar.current.visible = true;
         lightBar.current.position.set(0.3, 2.15, tz);
       }
+      if (barLight.current) {
+        barLight.current.intensity = 14;
+        barLight.current.position.set(0.3, 2.05, tz);
+      }
     } else if (a === 5) {
       // Protect: the coating goes on and hazes the car; the cloth takes it off panel by panel.
       cf.haze = smooth(unlerp(0.02, 0.22, d));
@@ -194,8 +200,10 @@ export function Process({ act, car, mobile }: Props) {
           <boxGeometry args={[1.6, 0.06, 0.2]} />
           <meshStandardMaterial color="#15161a" roughness={0.6} />
         </mesh>
-        <pointLight color="#eef2ff" intensity={14} distance={4} decay={2} position={[0, -0.1, 0]} />
       </group>
+      {/* Its light stays in the scene, dark outside act 5. Hiding a light changes how many
+          the scene has, and every material in it would recompile mid-scroll. */}
+      <pointLight ref={barLight} color="#eef2ff" intensity={0} distance={4} decay={2} />
 
       {/* The work light under the car in act 3. */}
       <pointLight ref={workLight} color="#fff3d6" intensity={0} distance={5} decay={2} position={[0, 0.25, 0]} />

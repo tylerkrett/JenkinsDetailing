@@ -7,6 +7,7 @@
     "why": "We look at every car dirty first. The dirt tells us what the paint has been through.",
     "text": "Nothing is washed until it has been looked at. Where the grime sits, how the water runs off, what the wheels look like up close: all of it decides what the car needs and what it does not.",
     "service": "detailing",
+    "still": "work/09.jpg",
     "sortOrder": 10
   },
   {
@@ -18,6 +19,7 @@
     "text": "Snow foam goes on bottom to top and sits until it has lifted the loose dirt, then it is rinsed off top to bottom. The contact wash uses two buckets with grit guards so the mitt never carries grit back to the panel. Tar, iron fallout and tree sap come off with dedicated removers, bonded contamination with a clay bar, and the car is dried with filtered air rather than a towel.",
     "service": "detailing",
     "image": "about/danny-foam.jpg",
+    "still": "about/danny-foam.jpg",
     "sortOrder": 20
   },
   {
@@ -29,6 +31,7 @@
     "text": "On the 4000 kg lift the wheels come off and go on the bench. Arches and calipers are cleaned by hand. The chassis is jet washed and degreased, wire brushed where it needs it, dried with compressed air and left to air before any coating goes on. Then the underside is protected with Lanoguard or a wax oil coating and left to cure.",
     "service": "undersealing",
     "image": "process/underside-foam.jpg",
+    "still": "work/13.jpg",
     "sortOrder": 30
   },
   {
@@ -39,6 +42,7 @@
     "why": "Brushing lifts the grit out of the pile before the hoover, or it stays in there and wears the fabric.",
     "text": "A stiff brush flicks the grit out of carpets and seats towards the crevice tool. Fabric is steamed, leather is cleaned with a soft brush and fed so it stays matte, vents and switches are brushed out, and the dash and door cards are dressed with a matte finish, never a greasy shine.",
     "service": "detailing",
+    "still": "work/07.jpg",
     "sortOrder": 40
   },
   {
@@ -49,6 +53,7 @@
     "why": "Swirls only show under a hard point light, which is why they hide in daylight and why we correct under one.",
     "text": "A paint depth gauge tells us how much clear coat there is to work with. Then the dual-action polisher goes over the car in small sections, cross-hatched passes with half a pad of overlap, cutting first and refining after. A panel wipe removes the polishing oils so what we see is the true finish, not a filled one.",
     "service": "paint-correction",
+    "still": "work/03.jpg",
     "sortOrder": 50
   },
   {
@@ -59,6 +64,7 @@
     "why": "Ceramic is a sacrificial glass layer. It takes the abuse so the clear coat does not have to.",
     "text": "The coating is applied in straight overlapping strokes, section by section. After a minute or two it flashes, an oil-slick rainbow that shows it has bonded, and it is levelled with two fresh towels before it sets. The car then cures indoors out of the sun. Water beads high and tight on it, and sheets straight off.",
     "service": "ceramic-protection",
+    "still": "work/21.jpg",
     "sortOrder": 60
   },
   {
@@ -69,6 +75,7 @@
     "why": "This is the standard. If it is not right under the lights, it is not finished.",
     "text": "The car is checked under the lights panel by panel, the wheels are torqued back on, and it is handed back with the aftercare guide: how to wash it, what not to use, and when to come back for a maintenance wash.",
     "service": "ceramic-protection",
+    "still": "work/27.jpg",
     "sortOrder": 70
   }
 ]

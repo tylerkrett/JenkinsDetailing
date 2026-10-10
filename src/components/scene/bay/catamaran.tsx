@@ -80,7 +80,8 @@ export function Catamaran({ mobile }: Props) {
   });
 
   return (
-    <group position={[15.5, 0, Z + 9.4]} rotation={[0, -0.14, 0]}>
+    // Washed down over the drive-in, so it changes every frame: never merged with the scenery.
+    <group position={[15.5, 0, Z + 9.4]} rotation={[0, -0.14, 0]} userData={{ noBatch: true }}>
       {/* The cradle under each hull. */}
       {[-1, 1].map((sz) =>
         stands.map((sx) => (

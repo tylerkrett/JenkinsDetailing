@@ -106,7 +106,9 @@ export function Street({ mobile }: Props) {
   const length = STREET_TO - STREET_FROM;
   const midZ = (STREET_FROM + STREET_TO) / 2;
   const facadeX = ROAD_HALF + PAVEMENT;
-  const litLamps = mobile ? 2 : 4;
+  // Every real light is paid for on every lit pixel of the scene, inside the bay too, so
+  // only the nearest lamps carry one; the rest glow on their own.
+  const litLamps = mobile ? 1 : 2;
 
   return (
     <group>

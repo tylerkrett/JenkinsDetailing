@@ -19,7 +19,7 @@
     ],
     "duration": "Half a day to a full day",
     "mobile": true,
-    "image": "about/danny-foam.jpg",
+    "image": "work/30.jpg",
     "featured": true,
     "sortOrder": 10
   },
@@ -42,6 +42,7 @@
       "Wheels off, coated and refitted",
       "Glass polished and coated, trim protected"
     ],
+    "image": "work/01.jpg",
     "duration": "One to three days",
     "guarantee": "Coating durability depends on the product chosen; see the package.",
     "featured": true,
@@ -65,6 +66,7 @@
       "Trim protection",
       "Aftercare guidance and a maintenance wash plan"
     ],
+    "image": "work/05.jpg",
     "duration": "One day plus the cure",
     "guarantee": "Two to three years with the maintenance plan",
     "featured": true,
@@ -91,7 +93,7 @@
     ],
     "duration": "Two days including curing",
     "guarantee": "Four years on the maintenance programme, with a twelve month inspection",
-    "image": "process/underside-foam.jpg",
+    "image": "work/23.jpg",
     "featured": true,
     "sortOrder": 40
   },
@@ -109,6 +111,7 @@
       "Office fogging"
     ],
     "duration": "Under an hour per vehicle",
+    "image": "work/06.jpg",
     "mobile": true,
     "sortOrder": 50
   },

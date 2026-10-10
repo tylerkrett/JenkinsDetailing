@@ -11,11 +11,15 @@ import { detectSceneSupport } from "~/lib/scene/capabilities";
 import { current } from "~/lib/scene/enter";
 import { modeForPath } from "~/lib/scene/mode";
 import { useScene } from "~/lib/scene/store";
+import { resetWarm } from "~/lib/scene/warm";
 
 import { Bay } from "./bay/bay";
 import { CameraRig } from "./camera-rig";
 import { Effects } from "./effects";
 import { ScrollDriver, scrollToProgress } from "./scroll-driver";
+
+/** Highest render resolution, in device pixels per CSS pixel. Past it the post effects cost more than they show. */
+const MAX_DPR = { desktop: 1.5, mobile: 1.25 } as const;
 
 /**
  * The scene's canvas. It mounts with the 3D view of /watch and unmounts when the visitor
@@ -28,13 +32,17 @@ export function SceneCanvas() {
   const setActive = useScene((s) => s.setActive);
   const mode = useScene((s) => s.mode);
   const [support, setSupport] = useState<ReturnType<typeof detectSceneSupport> | null>(null);
-  const [dpr, setDpr] = useState(1.5);
+  const [dpr, setDpr] = useState(1);
 
   useEffect(() => {
     const s = detectSceneSupport();
+    // A fresh warm-up for this mount; the preloader waits on it.
+    resetWarm();
     setSupport(s);
+    setDpr(Math.min(window.devicePixelRatio || 1, s.coarsePointer ? MAX_DPR.mobile : MAX_DPR.desktop));
     setActive(s.ok);
     return () => {
+      resetWarm();
       useScene.setState({ active: false, ready: false, world: null, progress: 0, entering: false });
     };
   }, [setActive]);
@@ -44,6 +52,7 @@ export function SceneCanvas() {
   if (!support?.ok) return null;
 
   const mobile = support.coarsePointer;
+  const maxDpr = Math.min(window.devicePixelRatio || 1, mobile ? MAX_DPR.mobile : MAX_DPR.desktop);
 
   return (
     <div
@@ -61,13 +70,19 @@ export function SceneCanvas() {
         }}
         frameloop={mode === "off" ? "never" : "always"}
         onCreated={({ gl }) => {
+          // The error check reads every program's log back synchronously, a stall per shader;
+          // the shaders are fixed, so production skips it.
+          gl.debug.checkShaderErrors = process.env.NODE_ENV !== "production";
           gl.domElement.addEventListener("webglcontextlost", () => setActive(false));
         }}
       >
         {process.env.NODE_ENV !== "production" ? <StatsProbe /> : null}
+        {/* Only a scene that is really struggling steps down. A browser that holds every page
+            to 30 fps (Chrome's energy saver, low power mode) must not read as one, or the bay
+            renders blurred for no gain. */}
         <PerformanceMonitor
-          bounds={() => [40, 58]}
-          onIncline={() => setDpr((d) => Math.min(mobile ? 1.5 : 2, d + 0.25))}
+          bounds={() => [24, 50]}
+          onIncline={() => setDpr((d) => Math.min(maxDpr, d + 0.25))}
           onDecline={() => setDpr((d) => Math.max(0.75, d - 0.25))}
         />
         <ScrollDriver />
