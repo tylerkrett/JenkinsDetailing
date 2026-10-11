@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 
 /**
- * Registers the service worker that serves the offline shell (the Too Street game) when a
+ * Registers the service worker that serves the offline shell (the Bucket Run game) when a
  * page cannot be reached. Production only: next dev does not serve public/sw.js reliably
  * and a worker caching dev chunks makes hot reload lie.
  */

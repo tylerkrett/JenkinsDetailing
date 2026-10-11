@@ -1,4 +1,4 @@
-import { Phone, Play } from "@phosphor-icons/react/dist/ssr";
+import { GameController, Phone, Play } from "@phosphor-icons/react/dist/ssr";
 
 import { getSettings } from "~/lib/content";
 import { telHref } from "~/lib/format";
@@ -23,10 +23,14 @@ export async function SiteHeader() {
                 <li key={l.href}>
                   <NavLink
                     href={l.href}
+                    aria-label={l.hint ? `${l.label}, ${l.hint}` : undefined}
                     className="text-bone/80 hover:text-bone decoration-accent/0 hover:decoration-accent aria-[current=page]:text-bone inline-flex items-center gap-1.5 underline-offset-[6px] transition-colors duration-200 hover:underline"
                   >
                     {l.href === "/watch" ? (
                       <Play size={12} weight="fill" aria-hidden="true" className="text-accent-lit" />
+                    ) : null}
+                    {l.href === "/play" ? (
+                      <GameController size={15} weight="fill" aria-hidden="true" className="text-accent-lit" />
                     ) : null}
                     {l.label}
                   </NavLink>

@@ -97,7 +97,7 @@
   <p class="fallback" id="fallback" hidden>The game could not start on this device.</p>
 </main>
 <footer>
-  <span>Reloads when you are back online</span>
+  <span id="note">Reloads when the signal is back, never mid-run</span>
   <button type="button" id="retry">Retry</button>
 </footer>
 <script>{{SCRIPT}}</script>
@@ -105,6 +105,7 @@
 (function () {
   var canvas = document.getElementById("game");
   var status = document.getElementById("status");
+  var note = document.getElementById("note");
   var retry = document.getElementById("retry");
   var fallback = document.getElementById("fallback");
   var game = null;
@@ -118,6 +119,13 @@
     fallback.hidden = false;
   }
 
+  // Once a run has started the page never reloads under the player: the signal coming back
+  // turns Retry into the way back to the site, taken when they choose.
+  var back = false;
+  function playing() {
+    return game !== null && game.getState().phase !== "title";
+  }
+
   var checking = false;
   function reachable() {
     return fetch(location.href, { method: "HEAD", cache: "no-store" })
@@ -125,7 +133,7 @@
       .catch(function () { return false; });
   }
   function reconnect(fromButton) {
-    if (checking) return;
+    if (checking || back) return;
     checking = true;
     if (fromButton) status.textContent = "Checking";
     reachable().then(function (ok) {
@@ -133,7 +141,13 @@
       if (ok) {
         status.textContent = "Back online";
         status.classList.add("on");
-        setTimeout(function () { location.reload(); }, 800);
+        if (fromButton || !playing()) {
+          setTimeout(function () { location.reload(); }, 800);
+        } else {
+          back = true;
+          note.textContent = "The signal is back. No rush.";
+          retry.textContent = "Open the site";
+        }
       } else if (fromButton) {
         status.textContent = "Still no signal";
         setTimeout(function () { status.textContent = "Bucket Run"; }, 1600);
@@ -150,11 +164,15 @@
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") probe();
   });
-  retry.addEventListener("click", function () { reconnect(true); });
+  retry.addEventListener("click", function () {
+    if (back) location.reload();
+    else reconnect(true);
+  });
   // A tap on Retry must not double as a jump.
   retry.addEventListener("pointerdown", function (e) { e.stopPropagation(); });
   retry.addEventListener("keydown", function (e) { e.stopPropagation(); });
-  window.addEventListener("pagehide", function () { if (game) game.destroy(); });
+  // A page going into the back-forward cache keeps its game, which carries on when restored.
+  window.addEventListener("pagehide", function (e) { if (game && !e.persisted) game.destroy(); });
 })();
 </script>
 </body>

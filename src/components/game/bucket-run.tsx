@@ -30,6 +30,27 @@ const fmt = new Intl.NumberFormat("en-GB");
 
 type Status = "loading" | "ready" | "missing";
 
+const RECOVER_KEY = "jd:play:recovered";
+
+/**
+ * The game's code loads after the page, so a page shown from the browser's memory with no
+ * signal (a tap on the nav link, offline in the installed app) can arrive without it. Under
+ * the service worker a reload always gets an answer: this page again when the network is
+ * there, the offline copy of the game (src/game/offline.html) when it is not. So reload,
+ * at most once a minute, so a broken deploy cannot loop. Without a worker, say so instead.
+ */
+function reloadToRecover() {
+  if (!("serviceWorker" in navigator) || !navigator.serviceWorker.controller) return false;
+  try {
+    if (Date.now() - Number(sessionStorage.getItem(RECOVER_KEY) ?? 0) < 60_000) return false;
+    sessionStorage.setItem(RECOVER_KEY, String(Date.now()));
+  } catch {
+    return false;
+  }
+  window.location.reload();
+  return true;
+}
+
 /**
  * Bucket Run on the site: the canvas, the cards between runs and the controls. The engine
  * (src/game) runs the game and draws the HUD itself; React only hears about phase changes,
@@ -91,7 +112,7 @@ export function BucketRun() {
         setStatus("ready");
       })
       .catch(() => {
-        if (!cancelled) setStatus("missing");
+        if (!cancelled && !reloadToRecover()) setStatus("missing");
       });
 
     return () => {

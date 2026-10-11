@@ -60,7 +60,8 @@ export function MobileMenu({ className, phone, phoneDigits, email }: Props) {
         aria-label="Menu"
         hidden={!open}
         className={cn(
-          "bg-ink fixed inset-0 z-50 flex flex-col [overscroll-behavior:contain] px-6 pt-4 pb-10",
+          // Scrolls when it has to: a phone on its side is well under the menu's height.
+          "bg-ink fixed inset-0 z-50 flex flex-col overflow-y-auto [overscroll-behavior:contain] px-6 pt-4 pb-10",
           "motion-safe:transition-opacity motion-safe:duration-300",
           open ? "opacity-100" : "opacity-0",
         )}
@@ -76,8 +77,8 @@ export function MobileMenu({ className, phone, phoneDigits, email }: Props) {
             <X size={26} aria-hidden="true" />
           </button>
         </div>
-        <nav aria-label="Primary" className="mt-10 flex-1">
-          <ul className="flex flex-col gap-5">
+        <nav aria-label="Primary" className="mt-10 flex-1 [@media(max-height:620px)]:mt-4">
+          <ul className="flex flex-col gap-5 [@media(max-height:620px)]:gap-4">
             <li>
               <Link
                 href="/"
@@ -92,6 +93,7 @@ export function MobileMenu({ className, phone, phoneDigits, email }: Props) {
                 <Link
                   href={l.href}
                   aria-current={pathname === l.href || pathname.startsWith(`${l.href}/`) ? "page" : undefined}
+                  aria-label={l.hint ? `${l.label}, ${l.hint}` : undefined}
                   className="font-display text-display-md hover:text-accent aria-[current=page]:text-accent block font-bold transition-colors"
                 >
                   {l.label}
@@ -100,7 +102,7 @@ export function MobileMenu({ className, phone, phoneDigits, email }: Props) {
             ))}
           </ul>
         </nav>
-        <div className="text-bone/70 flex flex-col gap-4 pb-[env(safe-area-inset-bottom)] text-base">
+        <div className="text-bone/70 flex flex-col gap-4 pt-8 pb-[env(safe-area-inset-bottom)] text-base">
           <a href={telHref(phoneDigits)} className="hover:text-accent tabular-nums transition-colors">
             {phone}
           </a>

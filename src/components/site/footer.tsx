@@ -66,16 +66,15 @@ export async function SiteFooter() {
           <ul className="mt-4 flex flex-col gap-2.5 text-sm">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className="text-bone/80 hover:text-bone transition-colors">
+                <Link
+                  href={l.href}
+                  aria-label={l.hint ? `${l.label}, ${l.hint}` : undefined}
+                  className="text-bone/80 hover:text-bone transition-colors"
+                >
                   {l.label}
                 </Link>
               </li>
             ))}
-            <li>
-              <Link href="/play" className="text-bone/80 hover:text-bone transition-colors">
-                Bucket Run
-              </Link>
-            </li>
           </ul>
         </div>
         <div className="lg:col-span-3">
