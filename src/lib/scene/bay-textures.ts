@@ -6,6 +6,8 @@ import {
   type Texture,
 } from "three";
 
+import { BRAND_MARK_PNG } from "./brand-mark-png";
+
 /**
  * Runtime canvas textures for the unit and the forecourt. Nothing is fetched: every
  * surface is drawn once into a canvas at mount and released with the world. Seeds keep
@@ -209,25 +211,57 @@ export function makeSignTexture(
 export const BRAND_MARK_ASPECT = 184 / 90;
 
 /**
- * The site's Jenkins Detailing mark, for the gable. Same file the header uses, drawn
- * into a canvas so it sits on the same dispose path as the other bay textures.
+ * A stand-in of the header mark, painted immediately so the gable never sits empty
+ * while the real PNG decodes. Colour and layout follow the supplied artwork.
+ */
+function paintBrandMarkFallback(g: CanvasRenderingContext2D, width: number, height: number) {
+  g.save();
+  g.scale(width / 184, height / 90);
+  g.fillStyle = "#0068b8";
+  g.beginPath();
+  g.moveTo(8, 88);
+  g.lineTo(24, 52);
+  g.lineTo(182, 52);
+  g.lineTo(182, 88);
+  g.closePath();
+  g.fill();
+  g.fillStyle = "#ffffff";
+  g.font = 'italic 700 20px Archivo, "Arial Narrow", Arial, sans-serif';
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillText("DETAILING", 110, 70);
+  g.fillStyle = "#2a3088";
+  g.font = 'italic 700 38px "Snell Roundhand", "Brush Script MT", Georgia, serif';
+  g.textAlign = "left";
+  g.textBaseline = "alphabetic";
+  g.fillText("Jenkins", 6, 44);
+  g.font = 'italic 700 12px Georgia, serif';
+  g.fillText("JJ", 150, 18);
+  g.restore();
+}
+
+/**
+ * The site's Jenkins Detailing mark, for the gable. The header PNG is inlined so the
+ * bay does not wait on a fetch; a drawn stand-in covers the first frame.
  */
 export function makeBrandMarkTexture(): Texture {
   const width = 1024;
   const height = Math.round(width / BRAND_MARK_ASPECT);
   const { c, g } = canvas(width, height);
+  paintBrandMarkFallback(g, width, height);
   const t = texture(c, false);
-  const img = new Image();
-  const paint = () => {
+  const paint = (img: HTMLImageElement) => {
+    if (!img.naturalWidth) return;
     g.clearRect(0, 0, width, height);
     g.imageSmoothingEnabled = true;
     g.imageSmoothingQuality = "high";
     g.drawImage(img, 0, 0, width, height);
     t.needsUpdate = true;
   };
-  img.onload = paint;
-  img.src = "/brand/mark.png";
-  if (img.complete) paint();
+  const img = new Image();
+  img.onload = () => paint(img);
+  img.src = BRAND_MARK_PNG;
+  if (img.complete) paint(img);
   return t;
 }
 
