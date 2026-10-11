@@ -8,7 +8,7 @@ import { SiteHeader } from "~/components/site/header";
 import { JsonLd } from "~/components/site/json-ld";
 import { OfflineNotice } from "~/components/site/offline-notice";
 import { ServiceWorkerRegister } from "~/components/site/sw-register";
-import { getReviews, getSettings } from "~/lib/content";
+import { getReviews, getServices, getSettings } from "~/lib/content";
 import { OG, SITE_DESCRIPTION, SITE_NAME, SITE_URL, businessJsonLd, graph, ogImage, websiteJsonLd } from "~/lib/seo";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -69,14 +69,14 @@ const archivo = Archivo({
 });
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [settings, reviews] = await Promise.all([getSettings(), getReviews()]);
+  const [settings, reviews, services] = await Promise.all([getSettings(), getReviews(), getServices()]);
   return (
     <html lang="en-GB" className={`${figtree.variable} ${archivo.variable}`}>
       <body className="bg-ink text-bone font-sans antialiased">
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <JsonLd data={graph(websiteJsonLd(), businessJsonLd(settings, reviews))} />
+        <JsonLd data={graph(websiteJsonLd(), businessJsonLd(settings, reviews, services))} />
         <TRPCReactProvider>
           <div className="relative z-10">
             <SiteHeader />

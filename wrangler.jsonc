@@ -17,5 +17,18 @@
   "workers_dev": true,
   "keep_vars": true,
   "observability": { "enabled": true },
-  "upload_source_maps": true
+  "upload_source_maps": true,
+  "env": {
+    // `opennextjs-cloudflare deploy --env preview`: a separate jenkins-detailing-preview Worker on
+    // workers.dev only, for the client to review before a release. No custom domains; the
+    // middleware serves its address in place (no redirect to the apex) and marks it noindex.
+    "preview": {
+      "routes": [],
+      "workers_dev": true,
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS"
+      }
+    }
+  }
 }

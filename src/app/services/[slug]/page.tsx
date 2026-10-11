@@ -7,7 +7,7 @@ import { JsonLd } from "~/components/site/json-ld";
 import { Photo } from "~/components/site/photo";
 import { getPackages, getProcess, getService, getServices, getSettings } from "~/lib/content";
 import { fromPrice, paragraphs } from "~/lib/format";
-import { OG, breadcrumbs, graph, ogImage, pageMetadata, serviceEntity } from "~/lib/seo";
+import { OG, absolute, breadcrumbs, graph, ogImage, pageMetadata, serviceEntity, servicePageJsonLd } from "~/lib/seo";
 
 type Params = { slug: string };
 
@@ -42,11 +42,15 @@ export default async function ServicePage({ params }: { params: Promise<Params> 
   const related = steps.filter((st) => st.service === service.slug);
 
   const structured = graph(
-    serviceEntity(service, true),
-    breadcrumbs([
-      { name: "Services", path: "/services" },
-      { name: service.title, path: `/services/${service.slug}` },
-    ]),
+    servicePageJsonLd(service, `${service.title} | Jenkins Detailing`),
+    serviceEntity(service, true, packages),
+    breadcrumbs(
+      [
+        { name: "Services", path: "/services" },
+        { name: service.title, path: `/services/${service.slug}` },
+      ],
+      `${absolute(`/services/${service.slug}`)}#breadcrumb`,
+    ),
   );
 
   return (

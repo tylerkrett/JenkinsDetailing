@@ -116,7 +116,7 @@ export async function SiteFooter() {
             </a>
             .
           </p>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link href="/privacy" className="hover:text-bone transition-colors">
               Privacy
             </Link>
@@ -126,6 +126,14 @@ export async function SiteFooter() {
             <p>
               © {new Date().getFullYear()} {s.name}
             </p>
+            <a
+              href="https://krett.com"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-bone transition-colors"
+            >
+              Designed & developed by Krett.com
+            </a>
           </div>
         </div>
       </div>

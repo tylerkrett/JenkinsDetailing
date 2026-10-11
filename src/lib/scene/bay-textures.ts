@@ -205,27 +205,29 @@ export function makeSignTexture(
   return texture(c, false);
 }
 
-/** The JJ roundel on the gable: purple disc, JJ, and the family name around it. */
-export function makeRoundelTexture(): Texture {
-  const size = 512;
-  const { c, g } = canvas(size);
-  g.clearRect(0, 0, size, size);
-  g.fillStyle = "#4b3a8f";
-  g.beginPath();
-  g.arc(size / 2, size / 2, size * 0.47, 0, Math.PI * 2);
-  g.fill();
-  g.strokeStyle = "#ffffff";
-  g.lineWidth = 10;
-  g.stroke();
-  g.fillStyle = "#ffffff";
-  g.font = `italic bold 200px Georgia, "Times New Roman", serif`;
-  g.textAlign = "center";
-  g.textBaseline = "middle";
-  g.fillText("JJ", size / 2, size / 2 + 8);
-  g.font = `bold 44px Archivo, Arial, sans-serif`;
-  g.fillText("JENKINS", size / 2, size * 0.2);
-  g.fillText("& SONS", size / 2, size * 0.82);
+/** The header mark's pixel size; the gable plane is cut to the same ratio. */
+export const BRAND_MARK_ASPECT = 184 / 90;
+
+/**
+ * The site's Jenkins Detailing mark, for the gable. Same file the header uses, drawn
+ * into a canvas so it sits on the same dispose path as the other bay textures.
+ */
+export function makeBrandMarkTexture(): Texture {
+  const width = 1024;
+  const height = Math.round(width / BRAND_MARK_ASPECT);
+  const { c, g } = canvas(width, height);
   const t = texture(c, false);
+  const img = new Image();
+  const paint = () => {
+    g.clearRect(0, 0, width, height);
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = "high";
+    g.drawImage(img, 0, 0, width, height);
+    t.needsUpdate = true;
+  };
+  img.onload = paint;
+  img.src = "/brand/mark.png";
+  if (img.complete) paint();
   return t;
 }
 

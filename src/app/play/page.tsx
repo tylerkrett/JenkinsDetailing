@@ -27,10 +27,19 @@ export default function PlayPage() {
     inLanguage: "en-GB",
     genre: "Endless runner",
     gamePlatform: "Web browser",
-    applicationCategory: "Game",
+    applicationCategory: "GameApplication",
     operatingSystem: "Any",
+    playMode: "SinglePlayer",
+    isAccessibleForFree: true,
+    image: absolute(OG.play),
+    featureList: [
+      "Plays in the browser, nothing to install",
+      "Works offline once the site has been visited",
+      "Keyboard and touch controls",
+    ],
     isPartOf: { "@id": WEBSITE_ID },
     author: businessRef(),
+    publisher: businessRef(),
     offers: { "@type": "Offer", price: "0", priceCurrency: "GBP" },
   });
 

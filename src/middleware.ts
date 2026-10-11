@@ -2,6 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { parseView, VIEW_COOKIE, VIEW_MAX_AGE } from "~/lib/view";
 
 const CANONICAL_HOST = "jenkinsdetailing.com";
+/**
+ * The review deploy (`wrangler deploy --env preview`, see wrangler.jsonc) answers on its own
+ * workers.dev address: served in place for the client to check, and kept out of search.
+ */
+const PREVIEW_HOST_PREFIX = "jenkins-detailing-preview.";
 
 /**
  * Where the old OpenCart addresses go. The previous site lived entirely under
@@ -40,16 +45,18 @@ function legacyRedirect(url: URL): string | null {
 /**
  * One address for the site. The www alias and the workers.dev origin both answer, but
  * they redirect permanently to the apex so search engines and shared links agree on a
- * single canonical host. Local and preview hosts are left alone. Old OpenCart
- * addresses are redirected on every host.
+ * single canonical host. Local and preview hosts are left alone; the review deploy's
+ * pages also carry noindex. Old OpenCart addresses are redirected on every host.
  */
 export function middleware(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
   const url = request.nextUrl.clone();
   const legacy = legacyRedirect(url);
-  const wrongHost = host === `www.${CANONICAL_HOST}` || host.endsWith(".workers.dev");
+  const preview = host.startsWith(PREVIEW_HOST_PREFIX) && host.endsWith(".workers.dev");
+  const wrongHost = host === `www.${CANONICAL_HOST}` || (host.endsWith(".workers.dev") && !preview);
   if (!legacy && !wrongHost) {
     const response = NextResponse.next();
+    if (preview) response.headers.set("X-Robots-Tag", "noindex, nofollow");
     const view = parseView(url.searchParams.get("view"));
     if (url.pathname === "/watch" && view) {
       response.cookies.set(VIEW_COOKIE, view, {

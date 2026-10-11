@@ -1178,6 +1178,6 @@ export function makeGaragePosterTexture(): Texture {
   g.fillText("GLEAMING", W / 2, 828);
   g.fillStyle = "#1a1611";
   g.font = `28px Georgia, serif`;
-  g.fillText("JENKINS & SONS — TREGARON", W / 2, 52);
+  g.fillText("JENKINS DETAILING — TREGARON", W / 2, 52);
   return texture(c, false);
 }

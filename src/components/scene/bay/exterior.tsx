@@ -18,9 +18,10 @@ import { gableShape } from "~/lib/scene/bay-shapes";
 import { Forecourt } from "./forecourt";
 import { Street } from "./street";
 import {
+  BRAND_MARK_ASPECT,
+  makeBrandMarkTexture,
   makeCorrugatedTexture,
   makeDoorTexture,
-  makeRoundelTexture,
   makeSashWindowTextures,
   makeSignTexture,
   makeForecourtTexture,
@@ -79,10 +80,11 @@ const rainFragment = /* glsl */ `
 
 /**
  * Beyond the shutter: Rose Garage's forecourt on a wet Welsh evening. The white
- * gabled front with the JJ roundel and the lettering, the long stone side building
- * under a corrugated roof, the church tower behind, two trees, the green railings, a
- * totem sign, the high street of shops beyond (street.tsx), an overcast sky and light
- * rain. All drawn at runtime; nothing fetched.
+ * gabled front with the Jenkins Detailing mark and the lettering, the long stone
+ * side building under a corrugated roof, the church tower behind, two trees, the
+ * green railings, a totem sign, the high street of shops beyond (street.tsx), an
+ * overcast sky and light rain. Surfaces are drawn at runtime; the mark is the
+ * same file the header already loaded.
  */
 export function Exterior({ mobile }: Props) {
   const tex = useMemo(() => {
@@ -107,7 +109,7 @@ export function Exterior({ mobile }: Props) {
       cladding,
       tarmac,
       house,
-      roundel: makeRoundelTexture(),
+      mark: makeBrandMarkTexture(),
       lettering: makeSignTexture("ROSE GARAGE", { width: 1024, height: 160, bg: "#f4f1ea", fg: "#1c1f2a" }),
       totem: makeTotemTexture(),
       sky: makeSkyTexture(),
@@ -218,10 +220,10 @@ export function Exterior({ mobile }: Props) {
         <boxGeometry args={[13.4, 0.12, 0.1]} />
         <meshStandardMaterial color="#3a3d44" roughness={0.8} />
       </mesh>
-      {/* The roundel on the gable and the lettering over the door. */}
-      <mesh position={[0, BAY.height + 1.45, Z + 0.4]}>
-        <planeGeometry args={[1.5, 1.5]} />
-        <meshStandardMaterial map={tex.roundel} transparent roughness={0.6} />
+      {/* The Jenkins Detailing mark on the gable and the lettering over the door. */}
+      <mesh position={[0, BAY.height + 1.2, Z + 0.4]}>
+        <planeGeometry args={[2.4, 2.4 / BRAND_MARK_ASPECT]} />
+        <meshStandardMaterial map={tex.mark} transparent roughness={0.55} depthWrite={false} />
       </mesh>
       <mesh position={[0, BAY.height + 0.05, Z + 0.4]}>
         <planeGeometry args={[4.2, 0.62]} />

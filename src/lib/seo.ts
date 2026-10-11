@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { env } from "~/env";
-import type { ProcessedImage, Review, Service, SiteSettings } from "~/lib/content";
+import type { Package, ProcessedImage, Review, Service, SiteSettings } from "~/lib/content";
 
 /**
  * Everything the pages share for search and social: the canonical origin, the Open
@@ -21,6 +21,19 @@ export const SITE_DESCRIPTION =
 /** Stable identifiers for the JSON-LD graph so every page points at the same business and site. */
 export const BUSINESS_ID = `${SITE_URL}/#business`;
 export const WEBSITE_ID = `${SITE_URL}/#website`;
+
+/** The owner: named in the About copy and on WhatsApp ("Hi Danny"), but not a setting. */
+export const OWNER = "Danny Jenkins";
+
+/** The square app icon: the logo search engines accept (the wordmark is under their 112 px minimum). */
+const LOGO = { src: "/icons/icon-512.png", size: 512 } as const;
+
+/** Where the work happens: the unit in Tregaron, its county, and at the door across Wales (see About). */
+const PLACES = {
+  tregaron: { "@type": "City", name: "Tregaron" },
+  ceredigion: { "@type": "AdministrativeArea", name: "Ceredigion" },
+  wales: { "@type": "AdministrativeArea", name: "Wales" },
+} as const;
 
 /** The Open Graph image contract. Every file is 1200x630 JPEG. */
 export const OG = {
@@ -95,13 +108,42 @@ export function shareSrc(image: ProcessedImage | undefined) {
   return (exact ?? above ?? largest)?.src;
 }
 
-/** The business as a schema.org AutomotiveBusiness. Only what settings actually hold is emitted. */
-export function businessJsonLd(settings: SiteSettings, reviews: Review[] = []): JsonLdObject {
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAY_CODES = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
+/**
+ * Structured opening hours from the settings' compact lines ("Mo-Fr 09:00-17:00",
+ * "Sa,Su 10:00-14:00"). A line that does not parse is left out rather than guessed at.
+ */
+export function openingHoursSpecification(lines: string[]): JsonLdObject[] {
+  return lines.flatMap((line) => {
+    const match = /^([A-Za-z,-]+)\s+(\d{2}:\d{2})-(\d{2}:\d{2})$/.exec(line);
+    if (!match) return [];
+    const [, dayList = "", opens, closes] = match;
+    const dayOfWeek = dayList.split(",").flatMap((part) => {
+      const [from = "", to = from] = part.split("-");
+      const a = DAY_CODES.indexOf(from);
+      const b = DAY_CODES.indexOf(to);
+      return a < 0 || b < a ? [] : DAYS.slice(a, b + 1);
+    });
+    return dayOfWeek.length ? [{ "@type": "OpeningHoursSpecification", dayOfWeek, opens, closes }] : [];
+  });
+}
+
+/**
+ * The business as a schema.org AutomotiveBusiness: what search engines and AI agents read
+ * to answer where it is, when it is open, what it does and roughly what it costs. Only what
+ * the content actually holds is emitted, so there are no reviews until real ones are added.
+ * Pass the services to include the priced catalogue.
+ */
+export function businessJsonLd(settings: SiteSettings, reviews: Review[] = [], services: Service[] = []): JsonLdObject {
   const sameAs = Object.values(settings.socials).filter((u): u is string => typeof u === "string" && u.length > 0);
   const openingHours = settings.hoursSpec
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean);
+  const hours = openingHoursSpecification(openingHours);
+  const prices = services.flatMap((s) => (s.fromPriceGBP === undefined ? [] : [s.fromPriceGBP]));
   const rating =
     settings.googleRating && settings.googleReviewCount
       ? {
@@ -118,7 +160,10 @@ export function businessJsonLd(settings: SiteSettings, reviews: Review[] = []): 
     "@id": BUSINESS_ID,
     name: settings.name,
     ...(settings.legalName ? { legalName: settings.legalName } : {}),
+    description: SITE_DESCRIPTION,
+    ...(settings.tagline ? { slogan: settings.tagline } : {}),
     url: `${SITE_URL}/`,
+    logo: { "@type": "ImageObject", url: absolute(LOGO.src), width: LOGO.size, height: LOGO.size },
     image: absolute(OG.site),
     telephone: `+${settings.phoneDigits}`,
     email: settings.email,
@@ -129,8 +174,44 @@ export function businessJsonLd(settings: SiteSettings, reviews: Review[] = []): 
       postalCode: settings.postcode,
       addressCountry: "GB",
     },
+    ...(settings.directionsUrl ? { hasMap: settings.directionsUrl } : {}),
+    areaServed: [PLACES.tregaron, PLACES.ceredigion, PLACES.wales],
     ...(openingHours.length ? { openingHours } : {}),
+    ...(hours.length ? { openingHoursSpecification: hours } : {}),
+    ...(prices.length ? { priceRange: `From £${Math.min(...prices)}` } : {}),
+    currenciesAccepted: "GBP",
+    founder: { "@type": "Person", name: OWNER },
     ...(settings.established ? { foundingDate: String(settings.established) } : {}),
+    // How to ask for a price: the quote form, the phone, the inbox, and when someone answers.
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer service",
+      telephone: `+${settings.phoneDigits}`,
+      email: settings.email,
+      url: absolute("/contact"),
+      ...(hours.length ? { hoursAvailable: hours } : {}),
+    },
+    ...(settings.carproApproved
+      ? {
+          hasCredential: {
+            "@type": "EducationalOccupationalCredential",
+            name: "CarPro approved detailing centre",
+            recognizedBy: { "@type": "Organization", name: "CarPro" },
+          },
+        }
+      : {}),
+    ...(services.length
+      ? {
+          knowsAbout: services.map((s) => s.title),
+          hasOfferCatalog: {
+            "@type": "OfferCatalog",
+            name: "Detailing services",
+            itemListElement: services.map((s) =>
+              serviceOffer(s, { "@type": "Service", "@id": serviceId(s.slug), name: s.title, url: serviceUrl(s.slug) }),
+            ),
+          },
+        }
+      : {}),
     ...(sameAs.length ? { sameAs } : {}),
     ...rating,
     ...(reviews.length
@@ -164,9 +245,10 @@ export function websiteJsonLd(): JsonLdObject {
   };
 }
 
-export function breadcrumbs(items: { name: string; path: string }[]): JsonLdObject {
+export function breadcrumbs(items: { name: string; path: string }[], id?: string): JsonLdObject {
   return {
     "@type": "BreadcrumbList",
+    ...(id ? { "@id": id } : {}),
     itemListElement: items.map((item, i) => ({
       "@type": "ListItem",
       position: i + 1,
@@ -176,29 +258,101 @@ export function breadcrumbs(items: { name: string; path: string }[]): JsonLdObje
   };
 }
 
-/** A service as a schema.org Service offered by the business. */
-export function serviceEntity(s: Service, full = false): JsonLdObject {
-  const src = shareSrc(s.image);
+const serviceUrl = (slug: string) => absolute(`/services/${slug}`);
+/** The service itself; its page's URL is the page's own id. */
+const serviceId = (slug: string) => `${serviceUrl(slug)}#service`;
+
+/**
+ * What a service costs, as far as the content says: its "from" price when it has one, and
+ * its price note either way, which holds the real figures ("£50 per vehicle", "plus VAT").
+ */
+function serviceOffer(s: Service, itemOffered?: JsonLdObject): JsonLdObject {
   return {
-    "@type": "Service",
-    "@id": absolute(`/services/${s.slug}`),
-    name: s.title,
-    url: absolute(`/services/${s.slug}`),
-    serviceType: s.title,
-    provider: businessRef(),
-    areaServed: s.mobile ? "Wales" : "Tregaron",
-    ...(src ? { image: absolute(src) } : {}),
-    ...(s.promise ? { description: s.promise } : {}),
-    ...(full && s.fromPriceGBP !== undefined
+    "@type": "Offer",
+    ...(itemOffered ? { itemOffered } : {}),
+    url: serviceUrl(s.slug),
+    priceCurrency: "GBP",
+    ...(s.fromPriceGBP !== undefined
       ? {
-          offers: {
-            "@type": "Offer",
-            price: s.fromPriceGBP,
+          price: s.fromPriceGBP,
+          priceSpecification: {
+            "@type": "PriceSpecification",
+            minPrice: s.fromPriceGBP,
             priceCurrency: "GBP",
-            priceSpecification: { "@type": "PriceSpecification", minPrice: s.fromPriceGBP, priceCurrency: "GBP" },
+            ...(/plus VAT/i.test(s.priceNote) ? { valueAddedTaxIncluded: false } : {}),
           },
         }
       : {}),
+    ...(s.priceNote ? { description: s.priceNote } : {}),
+  };
+}
+
+/**
+ * A service as a schema.org Service offered by the business, with what it costs. `full`
+ * (the service's own page) carries the whole description and its packages.
+ */
+export function serviceEntity(s: Service, full = false, packages: Package[] = []): JsonLdObject {
+  const src = shareSrc(s.image);
+  const description = full ? s.description || s.promise : s.promise;
+  return {
+    "@type": "Service",
+    "@id": serviceId(s.slug),
+    name: s.title,
+    url: serviceUrl(s.slug),
+    serviceType: s.title,
+    provider: businessRef(),
+    areaServed: s.mobile ? PLACES.wales : PLACES.tregaron,
+    // "dynamic": done at the customer's door as well as at the unit.
+    providerMobility: s.mobile ? "dynamic" : "static",
+    ...(src ? { image: absolute(src) } : {}),
+    ...(description ? { description } : {}),
+    offers: serviceOffer(s),
+    ...(full && packages.length
+      ? {
+          hasOfferCatalog: {
+            "@type": "OfferCatalog",
+            name: `${s.title} packages`,
+            itemListElement: packages.map((p) => ({
+              "@type": "Offer",
+              itemOffered: {
+                "@type": "Service",
+                name: `${s.title}: ${p.name}`,
+                ...(p.summary ? { description: p.summary } : {}),
+              },
+              priceCurrency: "GBP",
+              ...(p.priceGBP !== undefined ? { price: p.priceGBP } : {}),
+              ...(p.priceNote ? { description: p.priceNote } : {}),
+            })),
+          },
+        }
+      : {}),
+  };
+}
+
+/**
+ * A service's own page: an FAQPage when the service has questions (the same ones the page
+ * shows), a plain WebPage otherwise. Either way it is about the service, inside the site.
+ */
+export function servicePageJsonLd(s: Service, name: string): JsonLdObject {
+  const url = serviceUrl(s.slug);
+  const page = {
+    "@id": url,
+    url,
+    name,
+    inLanguage: "en-GB",
+    isPartOf: { "@id": WEBSITE_ID },
+    breadcrumb: { "@id": `${url}#breadcrumb` },
+  };
+  if (!s.faq.length) return { "@type": "WebPage", ...page, mainEntity: { "@id": serviceId(s.slug) } };
+  return {
+    "@type": "FAQPage",
+    ...page,
+    about: { "@id": serviceId(s.slug) },
+    mainEntity: s.faq.map((q) => ({
+      "@type": "Question",
+      name: q.question,
+      acceptedAnswer: { "@type": "Answer", text: q.answer },
+    })),
   };
 }
 
