@@ -31,6 +31,8 @@ export function Preloader({ loaders, label }: Props) {
     const fractions = loaders.map(() => 0);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    // Hold the car at the start while assets load; a restored scroll would show it clean.
+    window.scrollTo(0, 0);
     let cancelled = false;
 
     const publish = () => {

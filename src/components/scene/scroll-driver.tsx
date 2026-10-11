@@ -81,8 +81,13 @@ export function ScrollDriver() {
   useEffect(() => {
     // Lenis runs on its own frame so scrolling keeps working on routes where the WebGL
     // frameloop is stopped (the colour-accurate artwork pages).
+    // A reload must not inherit a restored scroll: the car is a function of progress,
+    // so reopening halfway down would leave it cleaned. ?act= jumps after the preloader.
+    window.scrollTo(0, 0);
     const instance = new Lenis({ autoRaf: true, lerp: 0.09, smoothWheel: true });
+    instance.scrollTo(0, { immediate: true, force: true });
     const setFrame = useScene.getState().setFrame;
+    setFrame(0, 0);
     let lastProgress = instance.progress;
     instance.on("scroll", (e) => {
       setFrame(e.progress, clamp(Math.abs(e.velocity) / VELOCITY_FULL, 0, 1));

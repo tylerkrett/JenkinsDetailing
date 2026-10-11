@@ -25,7 +25,13 @@ export default function Template({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // The site manages its own scroll; a reload must not reopen halfway down the corridor.
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-    if (!window.location.hash) resetScroll();
+    const go = () => {
+      if (!window.location.hash) resetScroll();
+    };
+    go();
+    // bfcache restores the whole page, including a finished car; pageshow is the hook.
+    window.addEventListener("pageshow", go);
+    return () => window.removeEventListener("pageshow", go);
   }, [pathname]);
   return (
     <div key={pathname} className={arrive ? "page-arrive" : undefined}>

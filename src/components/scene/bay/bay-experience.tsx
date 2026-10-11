@@ -8,6 +8,7 @@ import { clamp } from "~/lib/motion";
 import { bayLoaders } from "~/lib/scene/assets";
 import { detectSceneSupport } from "~/lib/scene/capabilities";
 import { ACT_COUNT, OUTRO_SPAN, STEP, THRESHOLD_SPAN, VH_PER_UNIT, bayLayout } from "~/lib/scene/bay-layout";
+import { resetScroll } from "~/lib/scene/lenis";
 import { useScene } from "~/lib/scene/store";
 
 import { ChapterCard } from "../chapter-card";
@@ -53,12 +54,18 @@ export function BayExperience({ steps, fallback, headline, children }: Props) {
 
   // A step linked from the home page (?act=3) opens at that act's hold, once, as soon as
   // the scene is ready. Later layout changes must not pull the visitor back there.
+  // Any other load — including a reload after the reveal — starts the car dirty at the top.
   const jumped = useRef(false);
   useEffect(() => {
     if (!active || !ready || jumped.current) return;
     jumped.current = true;
     const act = Number(new URLSearchParams(window.location.search).get("act"));
-    if (Number.isInteger(act) && act >= 1 && act <= steps.length) scrollToProgress(layout.holdProgress(act - 1), 0.01);
+    if (Number.isInteger(act) && act >= 1 && act <= steps.length) {
+      scrollToProgress(layout.holdProgress(act - 1), 0.01);
+      return;
+    }
+    resetScroll();
+    useScene.getState().setFrame(0, 0);
   }, [active, ready, layout, steps.length]);
 
   // The world is published from here, not the canvas, because only the DOM knows how

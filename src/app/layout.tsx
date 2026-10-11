@@ -2,6 +2,7 @@ import "~/styles/globals.css";
 
 import { type Metadata, type Viewport } from "next";
 import { Archivo, Figtree } from "next/font/google";
+import Script from "next/script";
 
 import { SiteFooter } from "~/components/site/footer";
 import { SiteHeader } from "~/components/site/header";
@@ -73,6 +74,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en-GB" className={`${figtree.variable} ${archivo.variable}`}>
       <body className="bg-ink text-bone font-sans antialiased">
+        {/* Before first paint, so a reload of /watch cannot reopen on a cleaned car. */}
+        <Script id="jd-scroll-restoration" strategy="beforeInteractive">
+          {`if("scrollRestoration"in history)history.scrollRestoration="manual"`}
+        </Script>
         <a href="#main" className="skip-link">
           Skip to content
         </a>
